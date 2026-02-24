@@ -1,88 +1,106 @@
 import { createServer } from 'net'
-import { makePeersMessage, MessageSchema } from './types'
-import * as m from './messages'
-import { BOOTSTRAP_PEERS } from './peers'
+import { makeErrorMessage, makePeersMessage, MessageSchema } from './messages'
+import { messageType, errorType } from './messages'
+import { ServerHelloMessage, InvalidHandshakeError, GetPeersMessage} from './messages'
+import { getKnownPeers } from './peers'
 
-const PORT = 18018
+// const PORT = 18018
 
-const server = createServer(async (socket) => {
+const log = (msg: string, ...args: any[]) => console.log(`\x1b[35m[SERVER]\x1b[0m ${msg}`, ...args)
+const logErr = (msg: string, ...args: any[]) => console.error(`\x1b[31m[SERVER]\x1b[0m ${msg}`, ...args)
 
-    let handshaked = false
+export const startServer = (PORT: number = 18018) => {
+    const server = createServer(async (socket) => {
 
-    const id = `${socket.remoteAddress}:${socket.remotePort}`
-    console.log(`Client connected from ${id}`)
-    
-    socket.write(m.ServerHello)
-    
-    socket.on('error', (error) => {
-        console.error(`[${id}]: Received error ${error}`)
+        let handshaked = false
+
+        const id = `${socket.remoteAddress}:${socket.remotePort}`
+        log(`Client connected from ${id}`)
+        
+        socket.write(ServerHelloMessage)
+        socket.write(GetPeersMessage)
+        
+        socket.on('error', (error) => {
+            logErr(`Received error ${error}`)
+        })
+
+        socket.on('close', () => {
+            log(`Client disconnected`)
+        })
+
+        let buffer = ''
+        socket.on('data', (data) => {
+            buffer += data
+
+            const messages = buffer.split('\n')
+            while (messages.length > 1) {
+                let msg = messages.shift()
+                if (msg === undefined) {
+                    logErr(`Error defragmenting messages`)
+                    continue
+                }
+
+                let message
+                try {
+                    message = JSON.parse(msg)
+                } catch (error) {
+                    logErr(`Error parsing JSON from client ${id}: ${error}`)
+                    const err = makeErrorMessage(errorType.INVALID_FORMAT, 'Invalid JSON')
+                    socket.write(err)
+                    continue
+                }
+
+                log(`Received '${message.type}' message from ${id}`)
+                
+                try {
+                    message = MessageSchema.parse(message)
+                } catch (_) {
+                    logErr(`Unknown protocol message`, message)
+                    const err = makeErrorMessage(errorType.INVALID_FORMAT, 'Unknown protocol message')
+                    socket.write(err)
+                }
+
+
+                if (message.type === 'hello') {
+                    if (message.agent) {
+                    log(`Client ${message.agent} (${id}) says hello`)
+                    }
+                    else {
+                        log(`Client ${id} says hello`)
+                    }
+                    handshaked = true
+                }
+                else if (!handshaked) {
+                    logErr(`Handshake not completed, expected hello message but received ${message.type}`)
+                    socket.write(InvalidHandshakeError)
+                    socket.end()
+                    return
+                }
+
+                switch (message.type) {
+                    case messageType.HELLO:
+                        log(`Client ${id} says hello`)
+                        break
+                    case messageType.GETPEERS:
+                        socket.write(makePeersMessage(getKnownPeers()))
+                        break
+                    default:
+                        log(`${message.type} messages not handled by server yet`)
+                }
+                
+                if (messages[0] === undefined) {
+                    logErr(`Error in parsing messages`)
+                    return
+                }
+
+                buffer = messages.join('\n')
+            }
+
+        })
+
     })
 
-    socket.on('close', () => {
-        console.log(`[${id}]: Client disconnected`)
+    server.listen(PORT, () => {
+        log(`Server listening on port ${PORT}`)
     })
-
-    let buffer = ''
-    socket.on('data', (data) => {
-        buffer += data
-
-        const messages = buffer.split('\n')
-        while (messages.length > 1) {
-            let msg = messages.shift()
-            if (msg === undefined) {
-                console.error(`Error defragmenting messages`)
-                return
-            }
-
-            let message
-            try {
-                message = JSON.parse(msg)
-            } catch (error) {
-                console.error(`Error parsing message as JSON`, message)
-                // socket.write(`Received invalid message that could not parse as json` + msg)
-                socket.write(m.InvalidFormatError)
-                socket.end()
-                return
-            }
-
-            try {
-                message = MessageSchema.parse(message)
-            } catch (_) {
-                console.error(`Unknown protocol message`, message)
-                // socket.write(`Received invalid protocol message` + message)
-                socket.write(m.InvalidFormatError)
-                // socket.end()
-                // return
-            }
-
-            console.log(`[${id}]: Received message`, message)
-
-            if (message.type === 'hello') {
-                handshaked = true
-            }
-            else if (!handshaked) {
-                console.error(`Handshake not completed, expected hello message but received ${message.type}`)
-                socket.write(m.InvalidHandshakeError)
-                socket.end()
-                return
-            }
-
-            if (message.type === 'getpeers') {
-                socket.write(makePeersMessage(BOOTSTRAP_PEERS))
-            }
-            
-            if (messages[0] === undefined) {
-                console.error(`Error in parsing messages`)
-                return
-            }
-
-            buffer = messages.join('\n')
-        }
-
-    })
-
-})
-
-server.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT}`)
-})
+}

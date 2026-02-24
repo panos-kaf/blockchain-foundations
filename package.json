@@ -5,8 +5,9 @@
   "private": true,
   "scripts": {
     "dev:server": "bun --hot src/server.ts",
-    "dev:client": "bun --hot src/client.ts"
-  },
+    "dev:client": "bun --hot src/client.ts",
+    "start": "bun --hot src/main.ts"
+},
   "devDependencies": {
     "@types/bun": "latest"
   },
