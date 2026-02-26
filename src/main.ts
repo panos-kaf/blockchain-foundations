@@ -3,7 +3,7 @@ import { startServer } from "./server";
 import { BOOTSTRAP_PEERS, getKnownPeers} from "./peers";
 
 startServer(18018);
-
+let cnt = 1
 for (const peer of BOOTSTRAP_PEERS) {
     const host = peer.split(':')[0]
     const port = peer.split(':')[1]
@@ -11,5 +11,5 @@ for (const peer of BOOTSTRAP_PEERS) {
         console.error(`Invalid bootstrap peer ${peer}`)
         continue
     }
-    startClient(host, parseInt(port))
+    startClient(host, parseInt(port), cnt++)
 }

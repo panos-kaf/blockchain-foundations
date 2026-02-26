@@ -25,7 +25,7 @@ export const startServer = (PORT: number = 18018) => {
         })
 
         socket.on('close', () => {
-            log(`Client disconnected`)
+            log(`Client ${id} disconnected`)
         })
 
         let buffer = ''
@@ -60,14 +60,7 @@ export const startServer = (PORT: number = 18018) => {
                     socket.write(err)
                 }
 
-
-                if (message.type === 'hello') {
-                    if (message.agent) {
-                    log(`Client ${message.agent} (${id}) says hello`)
-                    }
-                    else {
-                        log(`Client ${id} says hello`)
-                    }
+                if (message.type === messageType.HELLO) {
                     handshaked = true
                 }
                 else if (!handshaked) {
@@ -79,25 +72,23 @@ export const startServer = (PORT: number = 18018) => {
 
                 switch (message.type) {
                     case messageType.HELLO:
-                        log(`Client ${id} says hello`)
+                        log(`Client ${id}`, message.agent ? `(${message.agent})` : '', `says hello`)
                         break
                     case messageType.GETPEERS:
                         socket.write(makePeersMessage(getKnownPeers()))
+                        log(`Sent peers to client ${id}`)
                         break
                     default:
                         log(`${message.type} messages not handled by server yet`)
                 }
-                
+
                 if (messages[0] === undefined) {
                     logErr(`Error in parsing messages`)
                     return
                 }
-
                 buffer = messages.join('\n')
             }
-
         })
-
     })
 
     server.listen(PORT, () => {

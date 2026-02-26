@@ -3,18 +3,19 @@ import { appendPeers } from './peers'
 import { ClientHelloMessage, GetPeersMessage, messageType, makePeersMessage } from './messages'
 import { getKnownPeers } from './peers'
 
-const log = (msg: string, ...args: any[]) => console.log(`\x1b[36m[CLIENT]\x1b[0m ${msg}`, ...args)
-const logErr = (msg: string, ...args: any[]) => console.error(`\x1b[32m[CLIENT]\x1b[0m ${msg}`, ...args)
 
 // const SERVER_PORT = 18018
 // const SERVER_HOST = 'localhost'
 
 const client = new Socket()
 
-export const startClient = (SERVER_HOST: string , SERVER_PORT: number) => {
+export const startClient = (SERVER_HOST: string , SERVER_PORT: number, id: number) => {
     client.connect(SERVER_PORT, SERVER_HOST, () => {
         log(`Connected to server ${SERVER_HOST}:${SERVER_PORT}`)
     })
+    
+    const log = (msg: string, ...args: any[]) => console.log(`\x1b[36m[CLIENT ${id}]\x1b[0m ${msg}`, ...args)
+    const logErr = (msg: string, ...args: any[]) => console.error(`\x1b[32m[CLIENT ${id}]\x1b[0m ${msg}`, ...args)
 
     client.write(ClientHelloMessage)
     client.write(GetPeersMessage)
@@ -32,10 +33,11 @@ export const startClient = (SERVER_HOST: string , SERVER_PORT: number) => {
                 log(`Received '${parsedMessage.type}' message from server ${SERVER_HOST}:${SERVER_PORT}`)
                 switch (parsedMessage.type) {
                     case messageType.HELLO:
-                        log(`Server ${SERVER_HOST}:${SERVER_PORT} says hello`)
+                        // log(`Server ${SERVER_HOST}:${SERVER_PORT} says hello`)
                         break
                     case messageType.PEERS:
                         appendPeers(parsedMessage.peers, `${SERVER_HOST}:${SERVER_PORT}`)
+                        log(`Updated known peers. Total known peers: ${getKnownPeers().length}`)
                         break
                     case messageType.GETPEERS:
                         client.write(makePeersMessage(getKnownPeers()))
