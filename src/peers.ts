@@ -11,8 +11,9 @@ export const BOOTSTRAP_PEERS =
 
 const PEERS_FILE = path.join(process.cwd(), 'src/peers.csv')
 
+const peersMap = new Map<string, string>()
+
 const loadPeers = (): Map<string, string> => {
-    const peersMap = new Map<string, string>()
     
     BOOTSTRAP_PEERS.forEach(peer => peersMap.set(peer, 'bootstrap'))
 
@@ -147,4 +148,37 @@ export const appendPeers = (peers: string[], server: string) => {
     } else {
         // console.log('No new peers to save.')
     }
+}
+
+export const selectRandomPeersPerSource = (count: number = 1): string[] => {
+    const peersBySource = new Map<string, string[]>()
+    const selectedPeers: string[] = []
+
+    peersMap.forEach((source, peer) => {
+        if (!peersBySource.has(source)) {
+            peersBySource.set(source, [])
+        }
+        peersBySource.get(source)!.push(peer)
+    })
+
+    peersBySource.forEach((peers) => {
+        if (peers.length <= count) {
+            // If fewer peers than asked, take them all
+            selectedPeers.push(...peers)
+        } else {
+            // Pick count unique random indexes
+            const pickedIndexes = new Set<number>()
+            while (pickedIndexes.size < count) {
+                const index = Math.floor(Math.random() * peers.length)
+                pickedIndexes.add(index)
+            }
+            
+            pickedIndexes.forEach(index => {
+                if (peers[index] !== undefined)
+                    selectedPeers.push(peers[index])
+            })
+        }
+    })
+
+    return selectedPeers
 }

@@ -7,9 +7,19 @@ import { getKnownPeers } from './peers'
 // const SERVER_PORT = 18018
 // const SERVER_HOST = 'localhost'
 
-const client = new Socket()
 
-export const startClient = (SERVER_HOST: string , SERVER_PORT: number, id: number) => {
+export const startClient = (SERVER_HOST: string , SERVER_PORT: number, id: number, onClose?: () => void) => {
+    
+    const client = new Socket()
+
+    let isDisconnected = false
+    const handleClose = () => {
+        if (isDisconnected) return
+        isDisconnected = true
+        log(`Connection to server ${SERVER_HOST}:${SERVER_PORT} closed`)
+        if (onClose) onClose()
+    }
+
     client.connect(SERVER_PORT, SERVER_HOST, () => {
         log(`Connected to server ${SERVER_HOST}:${SERVER_PORT}`)
     })
@@ -59,10 +69,14 @@ export const startClient = (SERVER_HOST: string , SERVER_PORT: number, id: numbe
 
 
     client.on('error', (error) => {
-        logErr(`Received error ${error}`)
+        logErr(`Error: ${error}`)
+        handleClose()
+        // if (onClose) onClose()
     })
 
     client.on('close', () => {
-        log(`Client disconnected`)
+        log(`Client ${id} disconnected`)
+        handleClose()
+        // if (onClose) onClose()
     })
 }

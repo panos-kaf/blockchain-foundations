@@ -166,7 +166,7 @@ export const ServerHelloMessage = canonicalizeMessage({
 export const ClientHelloMessage = canonicalizeMessage({
     type: messageType.HELLO,
     version: '0.10.0',
-    agent: 'client-example',
+    agent: 'marabobos-client',
 })
 
 export const GetPeersMessage = canonicalizeMessage({
