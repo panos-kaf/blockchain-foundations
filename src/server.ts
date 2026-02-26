@@ -58,6 +58,7 @@ export const startServer = (PORT: number = 18018) => {
                     logErr(`Unknown protocol message`, message)
                     const err = makeErrorMessage(errorType.INVALID_FORMAT, 'Unknown protocol message')
                     socket.write(err)
+					continue
                 }
 
                 if (message.type === messageType.HELLO) {
