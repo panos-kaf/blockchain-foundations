@@ -56,6 +56,8 @@ setInterval(() => {
     
     if (activeConnections < 20) {
 
+		console.log(`\x1b[34m[Node]\x1b[0m Active connections: ${activeConnections}`)
+		process.stdout.write(`\x1b[34m[Node]\x1b[0m Discovery: attempting to connect to: `) 
         for (const peer of nodes) {
 
             if (BOOTSTRAP_PEERS.includes(peer)) continue;
@@ -63,10 +65,11 @@ setInterval(() => {
             const [host, portStr] = peer.split(':')
 
             if (host && portStr) {
-                console.log(`\x1b[34m[Node]\x1b[0m Discovery: attempting to connect to ${peer}`)
+				process.stdout.write(`[${peer}] `)
                 connect(host, parseInt(portStr))
             }
         }
+		console.log()
     }
     else console.log(`\x1b[34m[Node]\x1b[0m Capped Active connections: ${activeConnections}. Skipping discovery.`)
 }, 5000)
