@@ -52,9 +52,9 @@ for (const peer of BOOTSTRAP_PEERS) {
 // Periodic Discovery
 setInterval(() => {
 
-    const nodes = selectRandomPeersPerSource(3)
+    const nodes = selectRandomPeersPerSource(2)
     
-    if (activeConnections < 20) {
+    if (activeConnections < 25) {
 
 		console.log(`\x1b[34m[Node]\x1b[0m Active connections: ${activeConnections}`)
 		process.stdout.write(`\x1b[34m[Node]\x1b[0m Discovery: attempting to connect to: `) 
