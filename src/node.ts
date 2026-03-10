@@ -4,7 +4,7 @@ import type {  Message, HelloMessage, ErrorMessage,
             IHaveObjectMessage, ObjectMessage
             } from './messages'
 import * as m from './messages'
-import { hashObject, objectManager } from './object'
+import { hashObject, objectManager, validateObject } from './object'
 import { getKnownPeers, appendPeers } from './peers'
 
 export const connectedPeers = new Set<Peer>()
@@ -93,14 +93,23 @@ export default class Peer {
             parsed = JSON.parse(raw)
         } catch {
             this.logErr(`Invalid JSON: ${raw}`)
-            this.sendError('Could not parse message as JSON')
+            this.sendError(m.errorType.INVALID_FORMAT, 'Could not parse message as JSON')
+            if (!this.handshakeComplete) {
+                this.socket.destroy()
+            }
             return
         }
 
         const result = m.MessageSchema.safeParse(parsed)
         if (!result.success) {
+            if (typeof parsed === 'object' && parsed !== null && (parsed as any).type === 'hello') {
+                this.logErr(`Invalid hello message: ${raw}`)
+                this.sendError(m.errorType.INVALID_FORMAT, 'Invalid hello message format')
+                this.socket.destroy()
+            }
             this.logErr(`Unknown message: ${raw}`)
-            this.sendError('Unknown protocol message')
+            this.sendError(m.errorType.INVALID_FORMAT, 'Unknown protocol message')
+            this.socket.destroy()
             return
         }
 
@@ -108,7 +117,7 @@ export default class Peer {
 
         // First message must be hello
         if (!this.handshakeComplete && message.type !== 'hello') {
-            this.sendError('Expected hello as first message')
+            this.sendMessage(m.makeErrorMessage(m.errorType.INVALID_HANDSHAKE, 'Expected hello as first message'))
             this.socket.destroy()
             return
         }
@@ -125,8 +134,8 @@ export default class Peer {
         this.socket.write(msg)
     }
 
-    sendError(description: string) {
-        this.sendMessage(m.makeErrorMessage(m.errorType.INVALID_FORMAT, description))
+    sendError(type: m.errorType, description: string) {
+        this.sendMessage(m.makeErrorMessage(type, description))
     }
 
 
@@ -184,11 +193,13 @@ export default class Peer {
         }
         try {
             const object = message.object
-            const hash = hashObject(message.object)
-            if (hash !== message.objectid) {
-                this.logErr(`Object ID mismatch: has ${message.objectid}, expected hash: ${hash}`)
-                return
+            try { 
+                await validateObject(object, message.objectid) 
+            } catch(err){
+                    this.logErr(`Invalid object: ${err}`)
+                    return
             }
+
             const id = await objectManager.put(object)
             this.log(`Stored object ${id}`)
         } catch (error) {
