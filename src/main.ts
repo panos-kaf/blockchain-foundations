@@ -50,26 +50,28 @@ for (const peer of BOOTSTRAP_PEERS) {
 }
 
 // Periodic Discovery
-setInterval(() => {
+if (0) { // disabled 
+    setInterval(() => {
 
-    const nodes = selectRandomPeersPerSource(2)
-    
-    if (activeConnections < 25) {
+        const nodes = selectRandomPeersPerSource(2)
+        
+        if (activeConnections < 25) {
 
-		console.log(`\x1b[34m[Node]\x1b[0m Active connections: ${activeConnections}`)
-		process.stdout.write(`\x1b[34m[Node]\x1b[0m Discovery: attempting to connect to: `) 
-        for (const peer of nodes) {
+            console.log(`\x1b[34m[Node]\x1b[0m Active connections: ${activeConnections}`)
+            process.stdout.write(`\x1b[34m[Node]\x1b[0m Discovery: attempting to connect to: `) 
+            for (const peer of nodes) {
 
-            if (BOOTSTRAP_PEERS.includes(peer)) continue;
-            
-            const [host, portStr] = peer.split(':')
+                if (BOOTSTRAP_PEERS.includes(peer)) continue;
+                
+                const [host, portStr] = peer.split(':')
 
-            if (host && portStr) {
-				process.stdout.write(`[${peer}] `)
-                connect(host, parseInt(portStr))
+                if (host && portStr) {
+                    process.stdout.write(`[${peer}] `)
+                    connect(host, parseInt(portStr))
+                }
             }
+            console.log()
         }
-		console.log()
-    }
-    else console.log(`\x1b[34m[Node]\x1b[0m Capped Active connections: ${activeConnections}. Skipping discovery.`)
-}, 5000)
+        else console.log(`\x1b[34m[Node]\x1b[0m Capped Active connections: ${activeConnections}. Skipping discovery.`)
+    }, 5000)
+}

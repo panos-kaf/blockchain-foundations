@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import canonicalize from 'canonicalize'
+import { hashObject } from './object'
 
 export enum errorType {
     INTERNAL_ERROR = 'INTERNAL_ERROR',
@@ -38,10 +39,12 @@ export let canonicalizeMessage = (msg: Message): string => {
     return res + '\n'
 }
 
+// Message schemas and types
+
 export const HelloSchema = z.object({
     type: z.literal(messageType.HELLO),
     version: z.string().regex(/^0\.10\.[0-9]+$/),
-    agent: z.string().max(1000)
+    agent: z.string().max(1000).optional()
 })
 
 export const ErrorSchema = z.object({
@@ -69,19 +72,41 @@ export const IHaveObjectSchema = z.object({
     objectid: z.string().length(64)
 })
 
+export const TransactionSchema = z.object({
+    type: z.literal('transaction'),
+    inputs: z.array(z.object({
+                        outpoint: z.object({
+                            txid: z.string().length(64),
+                            index: z.number().int().nonnegative()
+                        }),
+                        sig: z.string().length(128)
+                        })
+                    ).max(1000),
+    outputs: z.array(z.object({
+                        pubkey: z.string().length(128),
+                        value: z.number().int().nonnegative()
+                        })
+                    ).max(1000),
+})
+
+export const BlockSchema = z.object({
+    type: z.literal('block'),
+    T: z.string(),
+    created: z.number(),
+    miner: z.string().max(128).optional(),
+    nonce: z.string().length(64),
+    note: z.string().max(1000).optional(),
+    previd: z.string().length(64).nullable(),
+    studentids: z.array(z.string().max(128)).max(10).optional(),
+    txids: z.array(z.string().length(64)).max(1000),
+})
+
 export const ObjectSchema = z.object({
     type: z.literal(messageType.OBJECT),
     objectid: z.string().length(64),
-    object: z.object({
-        T: z.string(),
-        created: z.number(),
-        miner: z.string().length(128),
-        nonce: z.string().length(64),
-        note: z.string().max(1000),
-        txids: z.array(z.string().length(64)).max(1000),
-        type: z.string().max(20)
+    object: z.union([BlockSchema, TransactionSchema])
     })
-})
+    
 
 export const GetMempoolSchema = z.object({
     type: z.literal(messageType.GETMEMPOOL),
@@ -113,6 +138,23 @@ export const MessageSchema = z.discriminatedUnion(
 )
 
 export type Message = z.infer<typeof MessageSchema>;
+export type HelloMessage = z.infer<typeof HelloSchema>;
+export type ErrorMessage = z.infer<typeof ErrorSchema>;
+export type GetPeersMessage = z.infer<typeof GetPeersSchema>;
+export type PeersMessage = z.infer<typeof PeersSchema>;
+export type GetObjectMessage = z.infer<typeof GetObjectSchema>;
+export type IHaveObjectMessage = z.infer<typeof IHaveObjectSchema>;
+export type ObjectMessage = z.infer<typeof ObjectSchema>;
+export type GetMempoolMessage = z.infer<typeof GetMempoolSchema>;
+export type MempoolMessage = z.infer<typeof MempoolSchema>;
+export type GetChaintipMessage = z.infer<typeof GetChaintipSchema>;
+export type ChaintipMessage = z.infer<typeof ChaintipSchema>;
+
+export type TransactionType = z.infer<typeof TransactionSchema>;
+export type BlockType = z.infer<typeof BlockSchema>;
+
+
+// Message constructors
 
 export const makeHelloMessage = (version: string = '0.10.0', agent: string) => {
     const helloMessage: Message = {
@@ -155,32 +197,68 @@ export const makePeersMessage = (peers: string[]) => {
     return canonicalizeMessage(peersMessage)
 }
 
+export const makeGetObjectMessage = (objectid: string) => {
+    const getObjectMessage: Message = {
+        type: messageType.GETOBJECT,
+        objectid
+    }
+    try {
+        GetObjectSchema.parse(getObjectMessage)
+    } catch (error) {
+        throw new Error(`Invalid getobject message with objectid ${objectid}`)
+    }
+    return canonicalizeMessage(getObjectMessage)
+}
+
+export const makeIHaveObjectMessage = (objectid: string) => {
+    const ihaveObjectMessage: Message = {
+        type: messageType.IHAVEOBJECT,
+        objectid
+    }
+    try {
+        IHaveObjectSchema.parse(ihaveObjectMessage)
+    } catch (error) {
+        throw new Error(`Invalid ihaveobject message with objectid ${objectid}`)
+    }
+    return canonicalizeMessage(ihaveObjectMessage)
+}
+
+export const makeObjectMessage = (object: TransactionType | BlockType) => {
+    const objectid = hashObject(object)
+    const objectMessage: Message = {
+        type: messageType.OBJECT,
+        objectid,
+        object
+    }
+    try {
+        ObjectSchema.parse(objectMessage)
+    } catch (error) {
+        throw new Error(`Invalid object message with id ${objectid}`)
+    }
+    return canonicalizeMessage(objectMessage)
+}
+
 
 // Static messages
-export const ServerHelloMessage = canonicalizeMessage({
+
+export const StaticHello = canonicalizeMessage({
     type: messageType.HELLO,
     version: '0.10.0',
     agent: 'marabobos',
 })
 
-export const ClientHelloMessage = canonicalizeMessage({
-    type: messageType.HELLO,
-    version: '0.10.0',
-    agent: 'marabobos-client',
-})
-
-export const GetPeersMessage = canonicalizeMessage({
+export const StaticGetPeers = canonicalizeMessage({
     type: messageType.GETPEERS,
 })
 
 // Error messages
-export const InvalidFormatError = canonicalizeMessage({
+export const StaticInvalidFormatError = canonicalizeMessage({
     type: messageType.ERROR,
     name: errorType.INVALID_FORMAT,
     description: 'The message format is invalid',
 })
 
-export const InvalidHandshakeError = canonicalizeMessage({
+export const StaticInvalidHandshakeError = canonicalizeMessage({
     type: messageType.ERROR,
     name: errorType.INVALID_HANDSHAKE,
     description: 'Handshake not completed, expected hello message'
