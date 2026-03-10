@@ -1,4 +1,5 @@
 src/peers.csv
+db/
 
 
 # dependencies (bun install)
