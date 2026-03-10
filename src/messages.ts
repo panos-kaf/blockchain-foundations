@@ -89,6 +89,16 @@ export const TransactionSchema = z.object({
                     ).max(1000),
 })
 
+export const CoinbaseTransactionSchema = z.object({
+    type: z.literal('transaction'),
+    height: z.number().int().nonnegative(),
+    outputs: z.array(z.object({
+                        pubkey: z.string().length(128),
+                        value: z.number().int().nonnegative()
+                        })
+                    ).max(1000),
+})
+
 export const BlockSchema = z.object({
     type: z.literal('block'),
     T: z.string(),
@@ -104,7 +114,7 @@ export const BlockSchema = z.object({
 export const ObjectSchema = z.object({
     type: z.literal(messageType.OBJECT),
     objectid: z.string().length(64),
-    object: z.union([BlockSchema, TransactionSchema])
+    object: z.union([BlockSchema, TransactionSchema, CoinbaseTransactionSchema])
     })
     
 
@@ -151,6 +161,7 @@ export type GetChaintipMessage = z.infer<typeof GetChaintipSchema>;
 export type ChaintipMessage = z.infer<typeof ChaintipSchema>;
 
 export type TransactionType = z.infer<typeof TransactionSchema>;
+export type CoinbaseTransactionType = z.infer<typeof CoinbaseTransactionSchema>;
 export type BlockType = z.infer<typeof BlockSchema>;
 
 
@@ -223,7 +234,7 @@ export const makeIHaveObjectMessage = (objectid: string) => {
     return canonicalizeMessage(ihaveObjectMessage)
 }
 
-export const makeObjectMessage = (object: TransactionType | BlockType) => {
+export const makeObjectMessage = (object: TransactionType | BlockType | CoinbaseTransactionType) => {
     const objectid = hashObject(object)
     const objectMessage: Message = {
         type: messageType.OBJECT,
