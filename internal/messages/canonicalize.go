@@ -6,10 +6,10 @@ import (
 	"sort"
 )
 
-// Canonicalize takes an arbitrary Go value, 
-// marshals it to JSON, 
-// and then re-marshals it in a canonical form 
-// with sorted keys and consistent formatting. 
+// Canonicalize takes an arbitrary Go value,
+// marshals it to JSON,
+// and then re-marshals it in a canonical form
+// with sorted keys and consistent formatting.
 func canonicalizeJSON(v interface{}) ([]byte, error) {
 	switch val := v.(type) {
 	case map[string]interface{}:
@@ -73,5 +73,5 @@ func Canonicalize(v interface{}) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return string(canon), nil
+	return string(canon) + "\n", nil
 }
