@@ -119,7 +119,10 @@ func (h *HelloSchema) Validate() error {
 	if err := ValidateVersionString(h.Version); err != nil {
 		return err
 	}
-	return ValidateStringMaxLen(*h.Agent, "agent", 1000)
+	if h.Agent != nil {
+		return ValidateStringMaxLen(*h.Agent, "agent", 1000)
+	}
+	return nil
 }
 
 func (e *ErrorSchema) Validate() error {
