@@ -7,11 +7,15 @@ import (
 
 // -- Constructor functions for messages --
 
-func MakeHelloMessage(version string, agent *string) (string, error) {
+func MakeHelloMessage() (string, error) {
+
+	version := "0.10.0"
+	agent := "marabobos"
+
 	return Canonicalize(HelloSchema{
 		Type:    HELLO,
 		Version: version,
-		Agent:   agent,
+		Agent:   &agent,
 	})
 }
 
