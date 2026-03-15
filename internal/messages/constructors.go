@@ -70,10 +70,11 @@ func MakeTXObjectMessage(tx Transaction) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	objectID, err := crypto.HashString(raw)
+	objectID, err := HashObject(tx)
 	if err != nil {
 		return "", err
 	}
+	// fmt.Printf("Generated ID for transaction: %s\n", objectID)
 
 	return MakeObjectMessage(HashID(objectID), json.RawMessage(raw))
 }
