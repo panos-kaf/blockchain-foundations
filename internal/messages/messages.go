@@ -4,12 +4,17 @@ import (
 	"encoding/json"
 )
 
-type Message interface {
-	MessageType() MessageType
-	Validate() error
-}
+type (
+	Message interface {
+		MessageType() MessageType
+		Validate() error
+	}
 
-type MessageType string
+	MessageType string
+	ErrorCode   string
+	HashID      string // 32byte (64-character) hex string
+	Signature   string // 64byte (128-character) hex string
+)
 
 const (
 	HELLO       MessageType = "hello"
@@ -23,11 +28,7 @@ const (
 	MEMPOOL     MessageType = "mempool"
 	GETCHAINTIP MessageType = "getchaintip"
 	CHAINTIP    MessageType = "chaintip"
-)
 
-type ErrorCode string
-
-const (
 	INTERNAL_ERROR          ErrorCode = "INTERNAL_ERROR"
 	INVALID_FORMAT          ErrorCode = "INVALID_FORMAT"
 	UNKNOWN_OBJECT          ErrorCode = "UNKNOWN_OBJECT"
@@ -42,69 +43,67 @@ const (
 	INVALID_GENESIS         ErrorCode = "INVALID_GENESIS"
 )
 
-type HashID string // 32byte (64-character) hex string
+type (
+	HelloSchema struct {
+		Type    MessageType `json:"type"`
+		Version string      `json:"version"`
+		Agent   *string     `json:"agent,omitempty"`
+	}
 
-type Signature string // 64byte (128-character) hex string
+	ErrorSchema struct {
+		Type        MessageType `json:"type"`
+		Name        ErrorCode   `json:"name"`
+		Description string      `json:"description"`
+	}
 
-type HelloSchema struct {
-	Type    MessageType `json:"type"`
-	Version string      `json:"version"`
-	Agent   *string     `json:"agent,omitempty"`
-}
+	GetPeersSchema struct {
+		Type MessageType `json:"type"`
+	}
 
-type ErrorSchema struct {
-	Type        MessageType `json:"type"`
-	Name        ErrorCode   `json:"name"`
-	Description string      `json:"description"`
-}
+	PeersSchema struct {
+		Type  MessageType `json:"type"`
+		Peers []string    `json:"peers"`
+	}
 
-type GetPeersSchema struct {
-	Type MessageType `json:"type"`
-}
+	GetObjectSchema struct {
+		Type MessageType `json:"type"`
+		ID   HashID      `json:"id"`
+	}
 
-type PeersSchema struct {
-	Type  MessageType `json:"type"`
-	Peers []string    `json:"peers"`
-}
+	IHaveObjectSchema struct {
+		Type MessageType `json:"type"`
+		ID   HashID      `json:"id"`
+	}
 
-type GetObjectSchema struct {
-	Type MessageType `json:"type"`
-	ID   HashID      `json:"id"`
-}
+	ObjectSchema struct {
+		Type     MessageType `json:"type"`
+		ObjectID HashID      `json:"objectid"`
 
-type IHaveObjectSchema struct {
-	Type MessageType `json:"type"`
-	ID   HashID      `json:"id"`
-}
+		// The raw, unparsed JSON of the object.
+		RawObject json.RawMessage `json:"object"`
 
-type ObjectSchema struct {
-	Type     MessageType `json:"type"`
-	ObjectID HashID      `json:"objectid"`
+		// This field is not part of the JSON schema but is used internally to hold the deserialized object after validation
+		Object Object `json:"-"`
+	}
 
-	// The raw, unparsed JSON of the object.
-	RawObject json.RawMessage `json:"object"`
+	GetMempoolSchema struct {
+		Type MessageType `json:"type"`
+	}
 
-	// This field is not part of the JSON schema but is used internally to hold the deserialized object after validation
-	Object Object `json:"-"`
-}
+	MempoolSchema struct {
+		Type  MessageType `json:"type"`
+		Txids []HashID    `json:"txids"`
+	}
 
-type GetMempoolSchema struct {
-	Type MessageType `json:"type"`
-}
+	GetChainTipSchema struct {
+		Type MessageType `json:"type"`
+	}
 
-type MempoolSchema struct {
-	Type  MessageType `json:"type"`
-	Txids []HashID    `json:"txids"`
-}
-
-type GetChainTipSchema struct {
-	Type MessageType `json:"type"`
-}
-
-type ChainTipSchema struct {
-	Type  MessageType `json:"type"`
-	Block HashID      `json:"block"`
-}
+	ChainTipSchema struct {
+		Type  MessageType `json:"type"`
+		Block HashID      `json:"block"`
+	}
+)
 
 // -- message type getters --
 

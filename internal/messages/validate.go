@@ -109,7 +109,6 @@ func ValidatePeers(peers []string) ([]string, error) {
 		if ValidatePeerFormat(peer) == nil {
 			validPeers = append(validPeers, peer)
 		} else {
-			// fmt.Printf("IGNORING INVALID PEER: '%s'\n", peer)
 			invalid = append(invalid, peer)
 		}
 	}
@@ -168,13 +167,10 @@ func (p *PeersSchema) Validate() error {
 
 func (g *GetObjectSchema) Validate() error {
 	return ValidateMessageType(g.Type)
-
-	// return ValidateStringExactLen(g.ID, "id", 64)
 }
 
 func (i *IHaveObjectSchema) Validate() error {
 	return ValidateMessageType(i.Type)
-	// return ValidateStringExactLen(i.ID, "id", 64)
 }
 
 func (o *ObjectSchema) Validate() error {
