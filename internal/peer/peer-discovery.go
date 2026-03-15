@@ -19,7 +19,7 @@ var (
 		"95.179.132.22:18018",
 		"45.32.235.245:18018",
 	}
-	PEERS_FILE = filepath.Join(".", "peers.csv")
+	PEERS_FILE = filepath.Join(".", "db", "peers.csv")
 	knownPeers = make(map[string]string)
 )
 
