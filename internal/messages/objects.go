@@ -61,19 +61,19 @@ type Object interface {
 	Validate() error
 }
 
-func (t *Transaction) ObjectType() ObjectType {
+func (t Transaction) ObjectType() ObjectType {
 	return TRANSACTION
 }
 
-func (c *CoinbaseTransaction) ObjectType() ObjectType {
+func (c CoinbaseTransaction) ObjectType() ObjectType {
 	return TRANSACTION
 }
 
-func (b *Block) ObjectType() ObjectType {
+func (b Block) ObjectType() ObjectType {
 	return BLOCK
 }
 
-func (t *Transaction) Validate() error {
+func (t Transaction) Validate() error {
 
 	if err := ValidateObjectType(t.Type); err != nil {
 		return err
@@ -103,11 +103,11 @@ func (t *Transaction) Validate() error {
 	return nil
 }
 
-func (c *CoinbaseTransaction) Validate() error {
+func (c CoinbaseTransaction) Validate() error {
 	return nil
 }
 
-func (b *Block) Validate() error {
+func (b Block) Validate() error {
 	return nil
 }
 
@@ -160,7 +160,7 @@ func makeBlock(T HashID, created int, miner *string, nonce HashID, note *string,
 	}
 }
 
-func HashObject(obj interface{}) (HashID, error) {
+func HashObject(obj Object) (HashID, error) {
 	raw, err := Canonicalize(obj)
 	if err != nil {
 		return "", err
