@@ -78,8 +78,8 @@ func (sig *Signature) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if len(s) != 64 {
-		return fmt.Errorf("invalid signature: must be exactly 64 characters, got %d", len(s))
+	if len(s) != 128 {
+		return fmt.Errorf("invalid signature: must be exactly 128 characters, got %d", len(s))
 	}
 
 	// Hexification - Hex strings must be in lower case.
