@@ -1,0 +1,133 @@
+package peer
+
+import (
+	"fmt"
+	"marabu/internal/messages"
+)
+
+// SendMessage sends a message to the peer.
+// Not a top level function, intended to be paired with message constructors like messages.MakeHelloMessage().
+// If mkErr is not nil, it returns that error instead of sending the message.
+func (p *Peer) SendMessage(t messages.MessageType, msg string, mkerr error) error {
+	if mkerr != nil {
+		return fmt.Errorf("Failed to create %s message: %w", t, mkerr)
+	}
+	_, err := p.conn.Write([]byte(msg))
+	if err != nil {
+		return fmt.Errorf("Failed to send %s message: %w", t, err)
+	}
+	return nil
+}
+
+// Broadcast sends a message to all connected peers.
+// Intended to be paired with message constructors like messages.MakeHelloMessage().
+func Broadcast(t messages.MessageType, msg string, mkErr error) {
+	if mkErr != nil {
+		globalError(fmt.Sprintf("Failed to create %s message: %v", t, mkErr))
+		return
+	}
+	connectedPeersMutex.Lock()
+	defer connectedPeersMutex.Unlock()
+	var hasErrors bool
+	for _, peer := range connectedPeers {
+		if err := peer.SendMessage(t, msg, nil); err != nil {
+			peer.logErr(fmt.Sprintf("Failed to broadcast %s message to %s: %v", t, peer.addr, err))
+			hasErrors = true
+		}
+	}
+	if hasErrors {
+		globalError(fmt.Sprintf("Failed to broadcast %s message to some peers", t))
+	} else {
+		globalLog(fmt.Sprintf("Successfully broadcasted %s message to all peers", t))
+	}
+}
+
+// -- Top Level Send Functions for each message type --
+
+func (p *Peer) SendHello() error {
+	msg, err := messages.MakeHelloMessage()
+	return p.SendMessage(messages.HELLO, msg, err)
+}
+
+func (p *Peer) SendError(name messages.ErrorCode, description string) error {
+	msg, err := messages.MakeErrorMessage(name, description)
+	return p.SendMessage(messages.ERROR, msg, err)
+}
+
+func (p *Peer) SendGetPeers() error {
+	msg, err := messages.MakeGetPeersMessage()
+	return p.SendMessage(messages.GETPEERS, msg, err)
+}
+
+func (p *Peer) SendPeers(peers []string) error {
+	msg, err := messages.MakePeersMessage(peers)
+	return p.SendMessage(messages.PEERS, msg, err)
+}
+
+func (p *Peer) SendGetObject(objectID messages.HashID) error {
+	msg, err := messages.MakeGetObjectMessage(objectID)
+	return p.SendMessage(messages.GETOBJECT, msg, err)
+}
+
+func (p *Peer) SendIHaveObject(objectID messages.HashID) error {
+	msg, err := messages.MakeIHaveObjectMessage(objectID)
+	return p.SendMessage(messages.IHAVEOBJECT, msg, err)
+}
+
+func (p *Peer) SendTransaction(tx messages.Transaction) error {
+	msg, err := messages.MakeTXObjectMessage(tx)
+	return p.SendMessage(messages.OBJECT, msg, err)
+}
+
+func (p *Peer) SendCoinbaseTransaction(cbtx messages.CoinbaseTransaction) error {
+	msg, err := messages.MakeCBTXObjectMessage(cbtx)
+	return p.SendMessage(messages.OBJECT, msg, err)
+}
+
+func (p *Peer) SendBlock(b messages.Block) error {
+	msg, err := messages.MakeBlockObjectMessage(b)
+	return p.SendMessage(messages.OBJECT, msg, err)
+}
+
+func (p *Peer) SendObject(objectID messages.HashID, obj messages.Object) error {
+
+	var msg string
+	var err error
+
+	switch o := obj.(type) {
+	case *messages.Transaction:
+		msg, err = messages.MakeTXObjectMessage(*o)
+	case *messages.CoinbaseTransaction:
+		msg, err = messages.MakeCBTXObjectMessage(*o)
+	case *messages.Block:
+		msg, err = messages.MakeBlockObjectMessage(*o)
+	default:
+		return fmt.Errorf("Unknown object type for ID %s: %T", objectID, obj)
+	}
+	return p.SendMessage(messages.OBJECT, msg, err)
+}
+
+func (p *Peer) SendGetMempool() error {
+	msg, err := messages.MakeGetMempoolMessage()
+	return p.SendMessage(messages.GETMEMPOOL, msg, err)
+}
+
+func (p *Peer) SendMempool(txIDs []messages.HashID) error {
+	msg, err := messages.MakeMempoolMessage(txIDs)
+	return p.SendMessage(messages.MEMPOOL, msg, err)
+}
+
+func (p *Peer) SendGetChainTip() error {
+	msg, err := messages.MakeGetChainTipMessage()
+	return p.SendMessage(messages.GETCHAINTIP, msg, err)
+}
+
+func (p *Peer) SendChainTip(chainTip messages.HashID) error {
+	msg, err := messages.MakeChainTipMessage(chainTip)
+	return p.SendMessage(messages.CHAINTIP, msg, err)
+}
+
+func (p *Peer) Greet() {
+	p.SendHello()
+	p.SendGetPeers()
+}
