@@ -2,6 +2,7 @@ package messages
 
 import (
 	"fmt"
+	"marabu/internal/crypto"
 )
 
 // -- Object sub-type definitions --
@@ -54,7 +55,7 @@ type Block struct {
 	Txids      []string   `json:"txids"`
 }
 
-// tx or coinbase or block
+// An object is either a Tx, a coinbase Tx, or a block
 type Object interface {
 	ObjectType() ObjectType
 	Validate() error
@@ -108,4 +109,65 @@ func (c *CoinbaseTransaction) Validate() error {
 
 func (b *Block) Validate() error {
 	return nil
+}
+
+// -- object constructors --
+
+func makeTxInput(txid HashID, index int, sig Signature) TxInput {
+	return TxInput{
+		Outpoint: Outpoint{
+			Txid:  txid,
+			Index: index,
+		},
+		Sig: sig,
+	}
+}
+
+func makeTxOutput(pubkey HashID, value int) TxOutput {
+	return TxOutput{
+		Pubkey: pubkey,
+		Value:  value,
+	}
+}
+
+func makeTransaction(inputs []TxInput, outputs []TxOutput) Transaction {
+	return Transaction{
+		Type:    TRANSACTION,
+		Inputs:  inputs,
+		Outputs: outputs,
+	}
+}
+
+func makeCoinbaseTransaction(height int, outputs []TxOutput) CoinbaseTransaction {
+	return CoinbaseTransaction{
+		Type:    TRANSACTION,
+		Height:  height,
+		Outputs: outputs,
+	}
+}
+
+func makeBlock(T HashID, created int, miner *string, nonce HashID, note *string, previd *HashID, studentids *[]string, txids []string) Block {
+	return Block{
+		Type:       BLOCK,
+		T:          T,
+		Created:    created,
+		Miner:      miner,
+		Nonce:      nonce,
+		Note:       note,
+		Previd:     previd,
+		Studentids: studentids,
+		Txids:      txids,
+	}
+}
+
+func HashObject(obj interface{}) (HashID, error) {
+	raw, err := Canonicalize(obj)
+	if err != nil {
+		return "", err
+	}
+	hash, err := crypto.HashString(raw)
+	if err != nil {
+		return "", err
+	}
+	return HashID(hash), nil
 }
