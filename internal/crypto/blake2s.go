@@ -1,6 +1,8 @@
 package crypto
 
 import (
+	"fmt"
+
 	"golang.org/x/crypto/blake2s"
 )
 
@@ -11,7 +13,7 @@ func Hash(data []byte) (string, error) {
 		return "", err
 	}
 	hasher.Write(data)
-	return string(hasher.Sum(nil)), nil
+	return fmt.Sprintf("%x", hasher.Sum(nil)), nil
 }
 
 // HashString is a convenience function that takes a string input, computes its BLAKE2s hash, and returns the hash as a hexadecimal string.
