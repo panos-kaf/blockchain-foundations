@@ -3,12 +3,13 @@ package messages
 import (
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 // Reusable compiled regexes for performance
 var (
 	versionRegex = regexp.MustCompile(`^0\.10\.[0-9]+$`)
-	peerRegex    = regexp.MustCompile(`^((?:\d{1,3}\.){3}\d{1,3}|\[[a-fA-F0-9:]+\]|[a-zA-Z0-9.-]+):[0-9]{1,5}$`)
+	peerRegex    = regexp.MustCompile(`^((?:\d{1,3}\.){3}\d{1,3}|\[[a-fA-F0-9:]+\]|[a-fA-F0-9:]+|[a-zA-Z0-9.-]+):[0-9]{1,5}$`)
 )
 
 // -- Type Validators --
@@ -95,18 +96,27 @@ func ValidateVersionString(val string) error {
 
 func ValidatePeerFormat(val string) error {
 	if !peerRegex.MatchString(val) {
-		return fmt.Errorf("invalid peer format: %s", val)
+		return fmt.Errorf("%s", val)
 	}
 	return nil
 }
 
-func ValidatePeersFormat(peers []string) error {
-	for i, peer := range peers {
-		if err := ValidatePeerFormat(peer); err != nil {
-			return fmt.Errorf("invalid peer format at index %d: %v", i, err)
+func ValidatePeers(peers []string) ([]string, error) {
+	var validPeers []string
+	var invalid []string
+	for _, peer := range peers {
+		peer = strings.TrimSpace(peer)
+		if ValidatePeerFormat(peer) == nil {
+			validPeers = append(validPeers, peer)
+		} else {
+			// fmt.Printf("IGNORING INVALID PEER: '%s'\n", peer)
+			invalid = append(invalid, peer)
 		}
 	}
-	return nil
+	if len(invalid) > 0 {
+		return validPeers, fmt.Errorf("some peers were invalid and ignored: %v", invalid)
+	}
+	return validPeers, nil
 }
 
 // -- Message Type Validators --
@@ -150,7 +160,10 @@ func (p *PeersSchema) Validate() error {
 	if err := ValidateStringSliceElementMaxLen(p.Peers, "peers", 1000); err != nil {
 		return err
 	}
-	return ValidatePeersFormat(p.Peers)
+	peers, err := ValidatePeers(p.Peers)
+	p.Peers = peers
+
+	return err
 }
 
 func (g *GetObjectSchema) Validate() error {
@@ -172,6 +185,16 @@ func (o *ObjectSchema) Validate() error {
 	if o.Object == nil {
 		return fmt.Errorf("object could not get parsed")
 	}
+
+	ID, err := HashObject(o.Object)
+	if err != nil {
+		return err
+	}
+
+	if ID != o.ObjectID {
+		return fmt.Errorf("object ID does not match hash of object content")
+	}
+
 	return o.Object.Validate()
 }
 
