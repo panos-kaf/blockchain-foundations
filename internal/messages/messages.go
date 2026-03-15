@@ -17,11 +17,11 @@ const (
 	GETPEERS    MessageType = "getpeers"
 	PEERS       MessageType = "peers"
 	GETOBJECT   MessageType = "getobject"
-	IHAVEOBJECT MessageType = "haveobject"
+	IHAVEOBJECT MessageType = "ihaveobject"
 	OBJECT      MessageType = "object"
 	GETMEMPOOL  MessageType = "getmempool"
 	MEMPOOL     MessageType = "mempool"
-	GETCHAINTIP MessageType = "getchainTip"
+	GETCHAINTIP MessageType = "getchaintip"
 	CHAINTIP    MessageType = "chaintip"
 )
 
