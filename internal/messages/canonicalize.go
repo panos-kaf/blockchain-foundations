@@ -73,5 +73,5 @@ func Canonicalize(v interface{}) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return string(canon) + "\n", nil
+	return string(canon), nil
 }

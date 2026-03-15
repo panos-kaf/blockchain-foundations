@@ -2,8 +2,19 @@ package messages
 
 import (
 	"encoding/json"
+	"fmt"
 	"marabu/internal/crypto"
 )
+
+// wraps the canonicalization process for message constructors
+func CanonicalizeMessage(msg interface{}) (string, error) {
+
+	canon, err := Canonicalize(msg)
+	if err != nil {
+		return "", fmt.Errorf("Error parsing message: %w", err)
+	}
+	return canon + "\n", nil
+}
 
 // -- Constructor functions for messages --
 
@@ -12,7 +23,7 @@ func MakeHelloMessage() (string, error) {
 	version := "0.10.0"
 	agent := "marabobos"
 
-	return Canonicalize(HelloSchema{
+	return CanonicalizeMessage(HelloSchema{
 		Type:    HELLO,
 		Version: version,
 		Agent:   &agent,
@@ -20,7 +31,7 @@ func MakeHelloMessage() (string, error) {
 }
 
 func MakeErrorMessage(name ErrorCode, description string) (string, error) {
-	return Canonicalize(ErrorSchema{
+	return CanonicalizeMessage(ErrorSchema{
 		Type:        ERROR,
 		Name:        name,
 		Description: description,
@@ -28,29 +39,29 @@ func MakeErrorMessage(name ErrorCode, description string) (string, error) {
 }
 
 func MakeGetPeersMessage() (string, error) {
-	return Canonicalize(GetPeersSchema{
+	return CanonicalizeMessage(GetPeersSchema{
 		Type: GETPEERS,
 	})
 }
 
 func MakePeersMessage(peers []string) (string, error) {
-	return Canonicalize(PeersSchema{
+	return CanonicalizeMessage(PeersSchema{
 		Type:  PEERS,
 		Peers: peers,
 	})
 }
 
 func MakeGetObjectMessage(objectID HashID) (string, error) {
-	return Canonicalize(ObjectSchema{
-		Type:     GETOBJECT,
-		ObjectID: objectID,
+	return CanonicalizeMessage(GetObjectSchema{
+		Type: GETOBJECT,
+		ID:   objectID,
 	})
 }
 
 func MakeIHaveObjectMessage(objectID HashID) (string, error) {
-	return Canonicalize(ObjectSchema{
-		Type:     IHAVEOBJECT,
-		ObjectID: objectID,
+	return CanonicalizeMessage(IHaveObjectSchema{
+		Type: IHAVEOBJECT,
+		ID:   objectID,
 	})
 }
 
@@ -94,7 +105,7 @@ func MakeBlockObjectMessage(block Block) (string, error) {
 }
 
 func MakeObjectMessage(objectID HashID, rawObject json.RawMessage) (string, error) {
-	return Canonicalize(ObjectSchema{
+	return CanonicalizeMessage(ObjectSchema{
 		Type:      OBJECT,
 		ObjectID:  objectID,
 		RawObject: rawObject,
@@ -102,26 +113,26 @@ func MakeObjectMessage(objectID HashID, rawObject json.RawMessage) (string, erro
 }
 
 func MakeGetMempoolMessage() (string, error) {
-	return Canonicalize(GetMempoolSchema{
+	return CanonicalizeMessage(GetMempoolSchema{
 		Type: GETMEMPOOL,
 	})
 }
 
 func MakeMempoolMessage(Txids []HashID) (string, error) {
-	return Canonicalize(MempoolSchema{
+	return CanonicalizeMessage(MempoolSchema{
 		Type:  MEMPOOL,
 		Txids: Txids,
 	})
 }
 
 func MakeGetChainTipMessage() (string, error) {
-	return Canonicalize(GetChainTipSchema{
+	return CanonicalizeMessage(GetChainTipSchema{
 		Type: GETCHAINTIP,
 	})
 }
 
 func MakeChainTipMessage(BlockID HashID) (string, error) {
-	return Canonicalize(ChainTipSchema{
+	return CanonicalizeMessage(ChainTipSchema{
 		Type:  CHAINTIP,
 		Block: BlockID,
 	})
