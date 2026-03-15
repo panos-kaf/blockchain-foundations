@@ -104,6 +104,14 @@ func (p *Peer) handleObject(msg *messages.ObjectSchema) {
 			return
 		}
 		p.log(messages.OBJECT, "Object stored successfully with ID "+string(ID))
+
+		// gossip!
+		advertisement, err := messages.MakeIHaveObjectMessage(ID)
+		if err != nil {
+			p.logErr("Error creating IHAVEOBJECT message: " + err.Error())
+			return
+		}
+		Broadcast(messages.IHAVEOBJECT, advertisement, err)
 	}
 }
 
