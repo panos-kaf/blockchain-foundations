@@ -64,7 +64,7 @@ func savePeers() {
 	defer knownPeersMutex.Unlock()
 	file, err := os.Create(PEERS_FILE)
 	if err != nil {
-		fmt.Println("Failed to save peers file:", err)
+		logs.GlobalLog(fmt.Sprintf("Failed to save peers file: %v", err))
 		return
 	}
 	defer file.Close()
