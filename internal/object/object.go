@@ -39,14 +39,14 @@ func (om *ObjectManager) Get(id HashID) (messages.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("DEBUG: Raw object JSON: %s\n", string(data))
+	// fmt.Printf("DEBUG: Raw object JSON: %s\n", string(data))
 
 	// Probe the type field
 	var probe struct {
 		Type string `json:"type"`
 	}
 	if err := json.Unmarshal(data, &probe); err != nil {
-		fmt.Printf("DEBUG: Failed to probe type: %v\n", err)
+		// fmt.Printf("DEBUG: Failed to probe type: %v\n", err)
 		return nil, err
 	}
 
@@ -56,21 +56,21 @@ func (om *ObjectManager) Get(id HashID) (messages.Object, error) {
 			Height *int `json:"height"`
 		}
 		if err := json.Unmarshal(data, &probe); err != nil {
-			fmt.Printf("DEBUG: Failed to probe transaction height: %v\n", err)
+			// fmt.Printf("DEBUG: Failed to probe transaction height: %v\n", err)
 			return nil, err
 		}
 
 		if probe.Height != nil {
 			var cb messages.CoinbaseTransaction
 			if err := json.Unmarshal(data, &cb); err != nil {
-				fmt.Printf("DEBUG: Failed to unmarshal coinbase transaction: %v\n", err)
+				// fmt.Printf("DEBUG: Failed to unmarshal coinbase transaction: %v\n", err)
 				return nil, err
 			}
 			return &cb, nil
 		} else {
 			var tx messages.Transaction
 			if err := json.Unmarshal(data, &tx); err != nil {
-				fmt.Printf("DEBUG: Failed to unmarshal transaction: %v\n", err)
+				// fmt.Printf("DEBUG: Failed to unmarshal transaction: %v\n", err)
 				return nil, err
 			}
 			return &tx, nil
@@ -78,13 +78,13 @@ func (om *ObjectManager) Get(id HashID) (messages.Object, error) {
 	case "block":
 		var blk messages.Block
 		if err := json.Unmarshal(data, &blk); err != nil {
-			fmt.Printf("DEBUG: Failed to unmarshal block: %v\n", err)
+			// fmt.Printf("DEBUG: Failed to unmarshal block: %v\n", err)
 			return nil, err
 		}
 		return &blk, nil
 
 	default:
-		return nil, fmt.Errorf("unknown object type: %s", probe.Type)
+		return nil, fmt.Errorf("Retrieved object of unknown type: %s", probe.Type)
 	}
 }
 
