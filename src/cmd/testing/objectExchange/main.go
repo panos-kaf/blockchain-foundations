@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"marabu/internal/messages"
 	"net"
@@ -58,50 +57,6 @@ func main() {
 	}
 	defer conn.Close()
 
-	// Example object ID and object (replace with real values)
-	objectID := messages.HashID("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")
-	// fmt.Printf("Object ID = %s\n", objectID)
-
-	dummyTransaction := messages.Transaction{
-		Type: messages.TRANSACTION,
-		Inputs: []messages.TxInput{
-			{
-				Outpoint: messages.Outpoint{
-					Txid:  "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
-					Index: 0,
-				},
-				Sig: "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
-			},
-		},
-		Outputs: []messages.TxOutput{
-			{
-				Pubkey: "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
-				Value:  100,
-			},
-		},
-	}
-
-	validID, _ := messages.HashObject(dummyTransaction)
-
-	objectMsg, _ := messages.MakeTXObjectMessage(dummyTransaction)
-
-	canonTX, err := messages.Canonicalize(dummyTransaction)
-	if err != nil {
-		fmt.Printf("Error canonicalizing transaction: %v\n", err)
-		os.Exit(1)
-	}
-
-	invalidObject := messages.ObjectSchema{
-		Type:      messages.OBJECT,
-		ObjectID:  objectID, //invalid id
-		RawObject: json.RawMessage(canonTX),
-	}
-
-	// fmt.Printf("Generated object message: %s\n", objectMsg)
-
-	// b, _ := json.Marshal(invalidObject)
-	// fmt.Printf("Invalid object JSON:\n%s\n\n", b)
-
 	// 0. Greet the server
 	helloMsg, _ := messages.MakeHelloMessage()
 	send(conn, helloMsg)
@@ -111,14 +66,49 @@ func main() {
 	fmt.Println("Received:", resp)
 	// Parse and check for hello response
 
-	fmt.Println("Starting 1st object exchange...")
-	fmt.Printf("Valid object message:\n%s\n\n", objectMsg)
-	exchangeObject(validID, objectMsg, conn, resp)
+	resp = receive(conn)
+	fmt.Println("Received:", resp)
+	// Parse and check for getpeers response
 
-	fmt.Println("Starting 2nd object exchange with invalid object...")
-	// Try sending an invalid object
-	invalidObjectMsg, _ := messages.CanonicalizeMessage(invalidObject)
+	// 1. Coinbase transaction
+	coinbaseTx := messages.CoinbaseTransaction{
+		Type:   messages.TRANSACTION,
+		Height: 0,
+		Outputs: []messages.TxOutput{
+			{
+				Pubkey: "958f8add086cc348e229a3b6590c71b7d7754e42134a127a50648bf07969d9a0",
+				Value:  50000000000,
+			},
+		},
+	}
+	coinbaseID, _ := messages.HashObject(coinbaseTx)
+	coinbaseMsg, _ := messages.MakeCBTXObjectMessage(coinbaseTx)
+	fmt.Println("\n--- Coinbase Transaction Exchange ---")
+	fmt.Printf("Coinbase object message:\n%s\n\n", coinbaseMsg)
+	exchangeObject(coinbaseID, coinbaseMsg, conn, resp)
 
-	// fmt.Printf("Invalid object message:\n%s\n\n", invalidObjectMsg)
-	exchangeObject(objectID, invalidObjectMsg, conn, resp)
+	// 2. Regular transaction
+	sig := messages.Signature("060bf7cbe141fecfebf6dafbd6ebbcff25f82e729a7770f4f3b1f81a7ec8a0ce4b287597e609b822111bbe1a83d682ef14f018f8a9143cef25ecc9a8b0c1c405")
+
+	input := messages.TxInput{
+		Outpoint: messages.Outpoint{Txid: coinbaseID, Index: 0},
+		Sig:      &sig,
+	}
+
+	output := messages.TxOutput{
+		Pubkey: "958f8add086cc348e229a3b6590c71b7d7754e42134a127a50648bf07969d9a0",
+		Value:  10,
+	}
+
+	regularTx := messages.Transaction{
+		Type:    messages.TRANSACTION,
+		Inputs:  []messages.TxInput{input},
+		Outputs: []messages.TxOutput{output},
+	}
+
+	regularID, _ := messages.HashObject(regularTx)
+	regularMsg, _ := messages.MakeTXObjectMessage(regularTx)
+	fmt.Println("\n--- Regular Transaction Exchange ---")
+	fmt.Printf("Regular object message:\n%s\n\n", regularMsg)
+	exchangeObject(regularID, regularMsg, conn, resp)
 }
