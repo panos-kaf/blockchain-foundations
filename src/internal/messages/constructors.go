@@ -53,15 +53,15 @@ func MakePeersMessage(peers []string) (string, error) {
 
 func MakeGetObjectMessage(objectID HashID) (string, error) {
 	return CanonicalizeMessage(GetObjectSchema{
-		Type: GETOBJECT,
-		ID:   objectID,
+		Type:     GETOBJECT,
+		ObjectID: objectID,
 	})
 }
 
 func MakeIHaveObjectMessage(objectID HashID) (string, error) {
 	return CanonicalizeMessage(IHaveObjectSchema{
-		Type: IHAVEOBJECT,
-		ID:   objectID,
+		Type:     IHAVEOBJECT,
+		ObjectID: objectID,
 	})
 }
 
@@ -74,8 +74,6 @@ func MakeTXObjectMessage(tx Transaction) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// fmt.Printf("Generated ID for transaction: %s\n", objectID)
-
 	return MakeObjectMessage(HashID(objectID), json.RawMessage(raw))
 }
 
