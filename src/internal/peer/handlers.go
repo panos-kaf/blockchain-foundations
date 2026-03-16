@@ -5,8 +5,6 @@ import (
 	"strconv"
 )
 
-type HashID = messages.HashID
-
 func (p *Peer) handleHello(msg *messages.HelloSchema) {
 	if msg.Agent != nil {
 		p.log(msg.Type, *msg.Agent+" ("+p.addr+") says hello, version: "+msg.Version)
@@ -107,8 +105,15 @@ func (p *Peer) handleObject(msg *messages.ObjectSchema) {
 		p.logErr(messages.OBJECT, m)
 	}
 
+	err := p.ValidateObject(msg.Object, msg.ObjectID)
+	if err != nil {
+		Err("Received invalid object from peer " + p.addr + ": " + err.Error())
+		return
+	}
 	ID := msg.ObjectID
-	Log("Received OBJECT with ID " + string(ID) + " from peer: " + p.addr)
+	IDStr := string(ID)
+
+	Log("Received OBJECT with ID " + IDStr + " from peer: " + p.addr)
 
 	exists, err := p.objectManager.Exists(ID)
 	if err != nil {
@@ -116,15 +121,15 @@ func (p *Peer) handleObject(msg *messages.ObjectSchema) {
 		return
 	}
 	if exists {
-		Log("We already have object " + string(ID) + ", ignoring received object.")
+		Log("We already have object " + IDStr + ", ignoring received object.")
 	} else {
-		Log("Storing new object with ID " + string(ID))
+		Log("Storing new object with ID " + IDStr)
 		_, err := p.objectManager.Put(msg.Object)
 		if err != nil {
 			Err("Error storing object: " + err.Error())
 			return
 		}
-		Log("Object stored successfully with ID " + string(ID))
+		Log("Object stored successfully with ID " + IDStr)
 
 		// gossip!
 		advertisement, err := messages.MakeIHaveObjectMessage(ID)

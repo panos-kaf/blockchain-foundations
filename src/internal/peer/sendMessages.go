@@ -64,12 +64,12 @@ func (p *Peer) SendPeers(peers []string) error {
 	return p.SendMessage(messages.PEERS, msg, err)
 }
 
-func (p *Peer) SendGetObject(objectID messages.HashID) error {
+func (p *Peer) SendGetObject(objectID HashID) error {
 	msg, err := messages.MakeGetObjectMessage(objectID)
 	return p.SendMessage(messages.GETOBJECT, msg, err)
 }
 
-func (p *Peer) SendIHaveObject(objectID messages.HashID) error {
+func (p *Peer) SendIHaveObject(objectID HashID) error {
 	msg, err := messages.MakeIHaveObjectMessage(objectID)
 	return p.SendMessage(messages.IHAVEOBJECT, msg, err)
 }
@@ -89,7 +89,7 @@ func (p *Peer) SendBlock(b messages.Block) error {
 	return p.SendMessage(messages.OBJECT, msg, err)
 }
 
-func (p *Peer) SendObject(objectID messages.HashID, obj messages.Object) error {
+func (p *Peer) SendObject(objectID HashID, obj messages.Object) error {
 
 	var msg string
 	var err error
@@ -112,7 +112,7 @@ func (p *Peer) SendGetMempool() error {
 	return p.SendMessage(messages.GETMEMPOOL, msg, err)
 }
 
-func (p *Peer) SendMempool(txIDs []messages.HashID) error {
+func (p *Peer) SendMempool(txIDs []HashID) error {
 	msg, err := messages.MakeMempoolMessage(txIDs)
 	return p.SendMessage(messages.MEMPOOL, msg, err)
 }
@@ -122,7 +122,7 @@ func (p *Peer) SendGetChainTip() error {
 	return p.SendMessage(messages.GETCHAINTIP, msg, err)
 }
 
-func (p *Peer) SendChainTip(chainTip messages.HashID) error {
+func (p *Peer) SendChainTip(chainTip HashID) error {
 	msg, err := messages.MakeChainTipMessage(chainTip)
 	return p.SendMessage(messages.CHAINTIP, msg, err)
 }
