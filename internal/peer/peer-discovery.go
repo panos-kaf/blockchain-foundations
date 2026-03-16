@@ -4,12 +4,14 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
+	"marabu/internal/logs"
 	"math/rand"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -19,8 +21,9 @@ var (
 		"95.179.132.22:18018",
 		"45.32.235.245:18018",
 	}
-	PEERS_FILE = filepath.Join(".", "db", "peers.csv")
-	knownPeers = make(map[string]string)
+	PEERS_FILE      = filepath.Join(".", "db", "peers.csv")
+	knownPeers      = make(map[string]string)
+	knownPeersMutex sync.Mutex
 )
 
 func init() {
@@ -32,9 +35,11 @@ func init() {
 
 // Load peers from file and bootstrap list
 func loadPeers() {
+	knownPeersMutex.Lock()
 	for _, peer := range BOOTSTRAP_PEERS {
 		knownPeers[peer] = "bootstrap"
 	}
+	knownPeersMutex.Unlock()
 	file, err := os.Open(PEERS_FILE)
 	if err != nil {
 		return
@@ -55,6 +60,8 @@ func loadPeers() {
 
 // Save peers to file
 func savePeers() {
+	knownPeersMutex.Lock()
+	defer knownPeersMutex.Unlock()
 	file, err := os.Create(PEERS_FILE)
 	if err != nil {
 		fmt.Println("Failed to save peers file:", err)
@@ -71,6 +78,8 @@ func savePeers() {
 
 // Get all known peers
 func GetKnownPeers() []string {
+	knownPeersMutex.Lock()
+	defer knownPeersMutex.Unlock()
 	keys := make([]string, 0, len(knownPeers))
 	for k := range knownPeers {
 		keys = append(keys, k)
@@ -140,24 +149,29 @@ func sanitizePeer(peer string) (string, bool) {
 
 // Add new peers
 func AppendPeers(peers []string, server string) {
+	knownPeersMutex.Lock()
+	defer knownPeersMutex.Unlock()
 	changed := false
 	for _, peer := range peers {
 		if sanitized, ok := sanitizePeer(peer); ok {
 			if _, exists := knownPeers[sanitized]; !exists {
 				knownPeers[sanitized] = server
-				fmt.Printf("Added new peer: %s from server %s\n", sanitized, server)
+				logs.GlobalLog(fmt.Sprintf("Added new peer: %s from server %s\n", sanitized, server))
 				changed = true
 			}
 		}
 	}
 	if changed {
-		fmt.Printf("Saving %d peers to disk...\n", len(knownPeers))
+		logs.GlobalLog(fmt.Sprintf("Saving %d peers to disk...\n", len(knownPeers)))
 		savePeers()
 	}
 }
 
 // Select random peers per source
 func SelectRandomPeersPerSource(count int) []string {
+	knownPeersMutex.Lock()
+	defer knownPeersMutex.Unlock()
+
 	peersBySource := make(map[string][]string)
 	for peer, source := range knownPeers {
 		peersBySource[source] = append(peersBySource[source], peer)
