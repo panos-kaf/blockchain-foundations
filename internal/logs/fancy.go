@@ -51,8 +51,8 @@ func ClientLog(mtype messages.MessageType, msg string, id int) {
 	// fmt.Printf("%s\n", msg)
 }
 
-func ClientError(msg string, id int) {
-	ClientLog(messages.ERROR, fmt.Sprintf("%sError: %s%s", RED, msg, RESET), id)
+func ClientError(mtype messages.MessageType, msg string, id int) {
+	ClientLog(mtype, fmt.Sprintf("%sError: %s%s", RED, msg, RESET), id)
 }
 
 func ServerLog(mtype messages.MessageType, msg string, id int) {
@@ -66,8 +66,8 @@ func ServerLog(mtype messages.MessageType, msg string, id int) {
 	// fmt.Printf("%s\n", msg)
 }
 
-func ServerError(msg string, id int) {
-	ServerLog(messages.ERROR, fmt.Sprintf("%sError: %s%s", RED, RESET, msg), id)
+func ServerError(mtype messages.MessageType, msg string, id int) {
+	ServerLog(mtype, fmt.Sprintf("%sError: %s%s", RED, RESET, msg), id)
 }
 
 func GlobalLog(msg string) {
