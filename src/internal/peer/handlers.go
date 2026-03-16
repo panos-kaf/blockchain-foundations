@@ -43,7 +43,7 @@ func (p *Peer) handleGetObject(msg *messages.GetObjectSchema) {
 	Err := func(m string) {
 		p.logErr(messages.GETOBJECT, m)
 	}
-	ID := msg.ID
+	ID := msg.ObjectID
 	Log("Peer: " + p.addr + " requested object: " + string(ID))
 
 	exists, err := p.objectManager.Exists(ID)
@@ -77,7 +77,7 @@ func (p *Peer) handleIHaveObject(msg *messages.IHaveObjectSchema) {
 		p.logErr(messages.IHAVEOBJECT, m)
 	}
 
-	ID := msg.ID
+	ID := msg.ObjectID
 	Log("Peer: " + p.addr + "  has object with ID: " + string(ID))
 
 	exists, err := p.objectManager.Exists(ID)
@@ -110,6 +110,7 @@ func (p *Peer) handleObject(msg *messages.ObjectSchema) {
 		Err("Received invalid object from peer " + p.addr + ": " + err.Error())
 		return
 	}
+
 	ID := msg.ObjectID
 	IDStr := string(ID)
 
@@ -124,6 +125,7 @@ func (p *Peer) handleObject(msg *messages.ObjectSchema) {
 		Log("We already have object " + IDStr + ", ignoring received object.")
 	} else {
 		Log("Storing new object with ID " + IDStr)
+
 		_, err := p.objectManager.Put(msg.Object)
 		if err != nil {
 			Err("Error storing object: " + err.Error())

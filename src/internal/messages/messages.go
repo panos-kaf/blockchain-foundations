@@ -66,13 +66,13 @@ type (
 	}
 
 	GetObjectSchema struct {
-		Type MessageType `json:"type"`
-		ID   HashID      `json:"id"`
+		Type     MessageType `json:"type"`
+		ObjectID HashID      `json:"objectid"`
 	}
 
 	IHaveObjectSchema struct {
-		Type MessageType `json:"type"`
-		ID   HashID      `json:"id"`
+		Type     MessageType `json:"type"`
+		ObjectID HashID      `json:"objectid"`
 	}
 
 	ObjectSchema struct {
