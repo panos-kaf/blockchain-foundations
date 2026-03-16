@@ -1,18 +1,21 @@
-build: marabu no-bootstrap objex
+SRC=./src
+
+build:
+	make -C $(SRC) build
 
 marabu:
-	go build -o bin/marabu ./cmd/marabu
+	make -C $(SRC) marabu
 
 no-bootstrap:
-	go build -o bin/no-bootstrap ./cmd/no-bootstrap
+	make -C $(SRC) no-bootstrap
 
 objex:
-	go build -o bin/objectExchange ./cmd/testing/objectExchange
+	make -C $(SRC) objex
 run:
-	go run ./cmd/marabu
+	make -C $(SRC) run
 
 clean:
-	$(RM) bins/*
+	$(RM) bin/*
 	$(RM) logs/*
 
 rebuild: clean build
