@@ -16,7 +16,7 @@ type TxInput struct {
 	Outpoint Outpoint `json:"outpoint"`
 
 	// 64byte (128-character) hexadecimal string, handle as simple string for now...
-	Sig Signature `json:"sig"`
+	Sig *Signature `json:"sig"`
 }
 
 type TxOutput struct {
@@ -119,7 +119,7 @@ func makeTxInput(txid HashID, index int, sig Signature) TxInput {
 			Txid:  txid,
 			Index: index,
 		},
-		Sig: sig,
+		Sig: &sig,
 	}
 }
 
