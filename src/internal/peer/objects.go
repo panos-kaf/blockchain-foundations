@@ -44,24 +44,33 @@ func (p *Peer) ValidateTransaction(tx *messages.Transaction, objectID HashID) (i
 		if err != nil {
 			return 0, fmt.Errorf("Failed to find referenced transaction %s for input %d: %v", outpoint.Txid, i, err)
 		}
-		refTx, ok := obj.(*messages.Transaction)
-		if !ok {
-			return 0, fmt.Errorf("Referenced object %s for input %d is not a transaction", outpoint.Txid, i)
+		// Check that the referenced object is indeed a transaction or a coinbase transaction
+
+		var outputs []messages.TxOutput
+		// refTx, ok := obj.(*messages.Transaction)
+		switch txObj := obj.(type) {
+		case *messages.Transaction:
+			outputs = txObj.Outputs
+		case *messages.CoinbaseTransaction:
+			outputs = txObj.Outputs
+		case *messages.Block:
+			return 0, fmt.Errorf("Referenced object %s for input %d is a block, expected transaction", outpoint.Txid, i)
+		default:
+			return 0, fmt.Errorf("Referenced object %s for input %d is of unknown type, expected transaction", outpoint.Txid, i)
 		}
-		if outpoint.Index < 0 || outpoint.Index >= len(refTx.Outputs) {
+
+		if outpoint.Index < 0 || outpoint.Index >= len(outputs) {
 			return 0, fmt.Errorf("Invalid output index %d in input %d referencing transaction %s", outpoint.Index, i, outpoint.Txid)
 		}
-		output := refTx.Outputs[outpoint.Index]
-		sig := input.Sig
+		output := outputs[outpoint.Index]
 
 		sumInputs += output.Value
 
-		pubkey, err := crypto.StringToPubkey(string(output.Pubkey))
-		if err != nil {
-			return 0, fmt.Errorf("Invalid pubkey hex string in input %d: %v", i, err)
-		}
+		sig := string(*input.Sig)
+		pubkey := string(output.Pubkey)
+		msg := formatTransactionMessage(tx)
 
-		if !crypto.Verify([]byte(objectID), string(sig), pubkey) {
+		if !crypto.Verify(pubkey, msg, sig) {
 			return 0, fmt.Errorf("Invalid signature for input %d: does not match referenced output's pubkey", i)
 		}
 	}
@@ -77,6 +86,19 @@ func (p *Peer) ValidateTransaction(tx *messages.Transaction, objectID HashID) (i
 	fee := sumInputs - sumOutputs
 	return fee, nil
 
+}
+
+func formatTransactionMessage(tx *messages.Transaction) []byte {
+	// Create a copy of the transaction with empty signatures for signing/verification
+	txCopy := *tx
+	txCopy.Inputs = make([]messages.TxInput, len(tx.Inputs))
+	copy(txCopy.Inputs, tx.Inputs)
+	for i := range txCopy.Inputs {
+		txCopy.Inputs[i].Sig = nil
+	}
+	// Canonicalize the transaction copy to get the message bytes
+	msgBytes, _ := (messages.Canonicalize(txCopy))
+	return []byte(msgBytes)
 }
 
 func (p *Peer) ValidateCoinbase(cb *messages.CoinbaseTransaction, objectID HashID) (int, error) {
