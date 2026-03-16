@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"marabu/internal/messages"
 	"net"
@@ -84,13 +85,22 @@ func main() {
 
 	objectMsg, _ := messages.MakeTXObjectMessage(dummyTransaction)
 
+	canonTX, err := messages.Canonicalize(dummyTransaction)
+	if err != nil {
+		fmt.Printf("Error canonicalizing transaction: %v\n", err)
+		os.Exit(1)
+	}
+
 	invalidObject := messages.ObjectSchema{
-		Type:     messages.OBJECT,
-		ObjectID: objectID, //invalid id
-		Object:   dummyTransaction,
+		Type:      messages.OBJECT,
+		ObjectID:  objectID, //invalid id
+		RawObject: json.RawMessage(canonTX),
 	}
 
 	// fmt.Printf("Generated object message: %s\n", objectMsg)
+
+	// b, _ := json.Marshal(invalidObject)
+	// fmt.Printf("Invalid object JSON:\n%s\n\n", b)
 
 	// 0. Greet the server
 	helloMsg, _ := messages.MakeHelloMessage()
@@ -102,10 +112,13 @@ func main() {
 	// Parse and check for hello response
 
 	fmt.Println("Starting 1st object exchange...")
+	fmt.Printf("Valid object message:\n%s\n\n", objectMsg)
 	exchangeObject(validID, objectMsg, conn, resp)
 
 	fmt.Println("Starting 2nd object exchange with invalid object...")
 	// Try sending an invalid object
 	invalidObjectMsg, _ := messages.CanonicalizeMessage(invalidObject)
+
+	// fmt.Printf("Invalid object message:\n%s\n\n", invalidObjectMsg)
 	exchangeObject(objectID, invalidObjectMsg, conn, resp)
 }
