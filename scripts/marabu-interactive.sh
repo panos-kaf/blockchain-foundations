@@ -15,9 +15,10 @@ FILE="${HOME}/dev/blockchain/marabu/logs/latest.log"
 
 # Launch a new kitty window for logs and capture the window ID
 logsWindowID=$(kitty @ launch \
+  --type=window \
   --title "Marabu Logs" \
   --keep-focus \
-  bash -c "tail -n +1 -F '$FILE' 2>/dev/null")
+  bash -c "sleep 0.2; exec tail -n +1 -F '$FILE' 2>/dev/null")
 
 trap "kitty @ close-window --match id:$logsWindowID" EXIT
 
