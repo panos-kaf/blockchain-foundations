@@ -1,6 +1,6 @@
 #!/bin/bash
 
-marabu="./marabu"
+marabu="./bin/no-bootstrap"
 
 # Make sure we're running inside kitty
 if [ -z "$KITTY_WINDOW_ID" ]; then
@@ -22,6 +22,7 @@ logsWindowID=$(kitty @ launch \
 trap "kitty @ close-window --match id:$logsWindowID" EXIT
 
 # Run CLI in current terminal
+clear
 $marabu
 CLI_PID=$!
 wait $CLI_PID
