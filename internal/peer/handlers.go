@@ -28,7 +28,7 @@ func (p *Peer) handleGetPeers() {
 	}
 	err := p.SendPeers(peers)
 	if err != nil {
-		p.logErr(err.Error())
+		p.logErr(messages.PEERS, err.Error())
 	}
 }
 
@@ -38,77 +38,98 @@ func (p *Peer) handlePeers(msg *messages.PeersSchema) {
 }
 
 func (p *Peer) handleGetObject(msg *messages.GetObjectSchema) {
+
+	Log := func(m string) {
+		p.log(messages.GETOBJECT, m)
+	}
+	Err := func(m string) {
+		p.logErr(messages.GETOBJECT, m)
+	}
 	ID := msg.ID
-	p.log(messages.GETOBJECT, "Peer: "+p.addr+" requested object: "+string(ID))
+	Log("Peer: " + p.addr + " requested object: " + string(ID))
 
 	exists, err := p.objectManager.Exists(ID)
 	if err != nil {
-		p.logErr("Error checking if object exists: " + err.Error())
+		Err("Error checking if object exists: " + err.Error())
 		return
 	}
 	if exists {
-		p.log(messages.GETOBJECT, "We have object "+string(ID)+", sending it to peer "+p.addr)
+		Log("We have object " + string(ID) + ", sending it to peer " + p.addr)
 		obj, err := p.objectManager.Get(ID)
 		if err != nil {
-			p.logErr("Error retrieving object: " + err.Error())
+			Err("Error retrieving object: " + err.Error())
 			return
 		}
 		err = p.SendObject(ID, obj)
 		if err != nil {
-			p.logErr("Error sending object: " + err.Error())
+			Err("Error sending object: " + err.Error())
 		}
 	} else {
-		p.log(messages.GETOBJECT, "We do not have object "+string(ID)+", cannot fulfill GETOBJECT request from peer "+p.addr)
+		Log("We do not have object " + string(ID) + ", cannot fulfill GETOBJECT request from peer " + p.addr)
 		p.SendError(messages.UNKNOWN_OBJECT, "Object not found: "+string(ID))
 	}
 }
 
 func (p *Peer) handleIHaveObject(msg *messages.IHaveObjectSchema) {
 
+	Log := func(m string) {
+		p.log(messages.IHAVEOBJECT, m)
+	}
+	Err := func(m string) {
+		p.logErr(messages.IHAVEOBJECT, m)
+	}
+
 	ID := msg.ID
-	p.log(messages.IHAVEOBJECT, "Peer: "+p.addr+"  has object with ID: "+string(ID))
+	Log("Peer: " + p.addr + "  has object with ID: " + string(ID))
 
 	exists, err := p.objectManager.Exists(ID)
 	if err != nil {
-		p.logErr("Error checking if object exists: " + err.Error())
+		Err("Error checking if object exists: " + err.Error())
 		return
 	}
 	if exists {
-		p.log(messages.IHAVEOBJECT, "We already have object "+string(ID))
+		Log("We already have object " + string(ID))
 	} else {
-		p.log(messages.IHAVEOBJECT, "We do not have object "+string(ID)+", requesting it from peer "+p.addr)
+		Log("We do not have object " + string(ID) + ", requesting it from peer " + p.addr)
 		err := p.SendGetObject(ID)
 		if err != nil {
-			p.logErr("Error sending GETOBJECT: " + err.Error())
+			Err("Error sending GETOBJECT: " + err.Error())
 		}
 	}
 }
 
 func (p *Peer) handleObject(msg *messages.ObjectSchema) {
 
+	Log := func(m string) {
+		p.log(messages.OBJECT, m)
+	}
+	Err := func(m string) {
+		p.logErr(messages.OBJECT, m)
+	}
+
 	ID := msg.ObjectID
-	p.log(messages.OBJECT, "Received OBJECT with ID "+string(ID)+" from peer: "+p.addr)
+	Log("Received OBJECT with ID " + string(ID) + " from peer: " + p.addr)
 
 	exists, err := p.objectManager.Exists(ID)
 	if err != nil {
-		p.logErr("Error checking if object exists: " + err.Error())
+		Err("Error checking if object exists: " + err.Error())
 		return
 	}
 	if exists {
-		p.log(messages.OBJECT, "We already have object "+string(ID)+", ignoring received object.")
+		Log("We already have object " + string(ID) + ", ignoring received object.")
 	} else {
-		p.log(messages.OBJECT, "Storing new object with ID "+string(ID))
+		Log("Storing new object with ID " + string(ID))
 		_, err := p.objectManager.Put(msg.Object)
 		if err != nil {
-			p.logErr("Error storing object: " + err.Error())
+			Err("Error storing object: " + err.Error())
 			return
 		}
-		p.log(messages.OBJECT, "Object stored successfully with ID "+string(ID))
+		Log("Object stored successfully with ID " + string(ID))
 
 		// gossip!
 		advertisement, err := messages.MakeIHaveObjectMessage(ID)
 		if err != nil {
-			p.logErr("Error creating IHAVEOBJECT message: " + err.Error())
+			Err("Error creating IHAVEOBJECT message: " + err.Error())
 			return
 		}
 		Broadcast(messages.IHAVEOBJECT, advertisement, err)
