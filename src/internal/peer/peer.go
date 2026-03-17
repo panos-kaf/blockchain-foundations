@@ -210,7 +210,7 @@ func StartServer(port int, objectManager *object.ObjectManager) error {
 	if err != nil {
 		return err
 	}
-	logs.GlobalLog(fmt.Sprintf("Peer server listening on port %d...", port))
+	logs.GlobalLog(fmt.Sprintf("Server listening on port %d...", port))
 	for {
 		conn, err := ln.Accept()
 		if err != nil {

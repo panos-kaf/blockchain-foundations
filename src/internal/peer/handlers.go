@@ -19,7 +19,6 @@ func (p *Peer) handleError(msg *messages.ErrorSchema) {
 }
 
 func (p *Peer) handleGetPeers() {
-	p.log(messages.GETPEERS, "Peer "+p.addr+" requested peers")
 	peers := make([]string, 0, len(knownPeers))
 	for peer := range knownPeers {
 		peers = append(peers, peer)
