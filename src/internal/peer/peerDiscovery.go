@@ -156,13 +156,13 @@ func AppendPeers(peers []string, server string) {
 		if sanitized, ok := sanitizePeer(peer); ok {
 			if _, exists := knownPeers[sanitized]; !exists {
 				knownPeers[sanitized] = server
-				logs.GlobalLog(fmt.Sprintf("Added new peer: %s from server %s\n", sanitized, server))
+				logs.GlobalLog(fmt.Sprintf("Added new peer: %s from server %s", sanitized, server))
 				changed = true
 			}
 		}
 	}
 	if changed {
-		logs.GlobalLog(fmt.Sprintf("Saving %d peers to disk...\n", len(knownPeers)))
+		logs.GlobalLog(fmt.Sprintf("Saving %d peers to disk...", len(knownPeers)))
 		savePeers()
 	}
 }
