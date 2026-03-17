@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"marabu/internal/bootstrap"
 	"marabu/internal/logs"
 	"marabu/internal/object"
+	"marabu/internal/ui"
 	"os"
 	"path/filepath"
 )
@@ -28,6 +30,7 @@ func main() {
 	}
 	defer peersFile.Close()
 
-	startNode(objectManager)
-
+	bootstrap.StartNode(objectManager)
+	ui.Start()
+	
 }

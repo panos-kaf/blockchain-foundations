@@ -13,6 +13,7 @@ const (
 	BLUE    = "\033[34m"
 	MAGENTA = "\033[35m"
 	CYAN    = "\033[36m"
+	WHITE   = "\033[37m"
 
 	BOLD   = "\033[1m"
 	ITALIC = "\033[3m"
@@ -39,39 +40,62 @@ func MessageTypeColor(mtype messages.MessageType) string {
 	}
 }
 
-func ClientLog(mtype messages.MessageType, msg string, id int) {
+func Log(mtype messages.MessageType, msg string, id int, color string) {
 	if mtype != "" {
 		msgcolor := MessageTypeColor(mtype)
-		msg = fmt.Sprintf("%s%s[Peer %d]%s[%s] %s%s", BOLD, BLUE, id, msgcolor, mtype, RESET, msg)
+		msg = fmt.Sprintf("%s%s[%d]%s[%s] %s%s", BOLD, color, id, msgcolor, mtype, RESET, msg)
 	} else {
-		msg = fmt.Sprintf("%s%s[Peer %d] %s%s", BOLD, BLUE, id, RESET, msg)
+		msg = fmt.Sprintf("%s%s[%d] %s%s", BOLD, color, id, RESET, msg)
 	}
-
 	log.Printf("%s\n", msg)
 	// fmt.Printf("%s\n", msg)
+}
+
+func Error(mtype messages.MessageType, msg string, id int, color string) {
+	Log(mtype, fmt.Sprintf("%sError: %s%s", RED, msg, RESET), id, color)
+}
+
+func Message(mtype messages.MessageType, sends bool, id int, color string, addr string) {
+	var direction string
+	if sends {
+		direction = CYAN + "[-->]" + RESET
+	} else {
+		direction = YELLOW + "[<--]" + RESET
+	}
+	msgcolor := MessageTypeColor(mtype)
+
+	// example format: [Peer 1][HELLO][-->][127.0.0.1:12345]
+	log.Printf("%s%s[%d]%s[%s]%s%s[%s]%s", BOLD, color, id, msgcolor, mtype, direction, WHITE, addr, RESET)
+}
+
+func ClientLog(mtype messages.MessageType, msg string, id int) {
+	Log(mtype, msg, id, BLUE)
 }
 
 func ClientError(mtype messages.MessageType, msg string, id int) {
-	ClientLog(mtype, fmt.Sprintf("%sError: %s%s", RED, msg, RESET), id)
+	Error(mtype, msg, id, BLUE)
 }
 
 func ServerLog(mtype messages.MessageType, msg string, id int) {
-	if mtype != "" {
-		msgcolor := MessageTypeColor(mtype)
-		msg = fmt.Sprintf("%s%s[Peer %d]%s[%s] %s%s", BOLD, MAGENTA, id, msgcolor, mtype, RESET, msg)
-	} else {
-		msg = fmt.Sprintf("%s%s[Peer %d] %s%s", BOLD, MAGENTA, id, RESET, msg)
-	}
-	log.Printf("%s\n", msg)
-	// fmt.Printf("%s\n", msg)
+	Log(mtype, msg, id, MAGENTA)
+}
+
+func ClientMessage(mtype messages.MessageType, sends bool, id int, addr string) {
+	Message(mtype, sends, id, BLUE, addr)
+}
+
+func ServerMessage(mtype messages.MessageType, sends bool, id int, addr string) {
+	Message(mtype, sends, id, MAGENTA, addr)
 }
 
 func ServerError(mtype messages.MessageType, msg string, id int) {
-	ServerLog(mtype, fmt.Sprintf("%sError: %s%s", RED, RESET, msg), id)
+	Error(mtype, msg, id, MAGENTA)
 }
 
+// Global log functions for non-peer-specific messages
+
 func GlobalLog(msg string) {
-	log.Printf("%s%s[Node] %s%s\n", BOLD, BLUE, RESET, msg)
+	log.Printf("%s%s[*] %s%s\n", BOLD, BLUE, RESET, msg)
 	// fmt.Printf("%s%s[Node] %s%s\n", BOLD, BLUE, RESET, msg)
 }
 

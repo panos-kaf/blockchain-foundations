@@ -3,11 +3,17 @@ SRC=./src
 build:
 	make -C $(SRC) build
 
-marabu:
-	make -C $(SRC) marabu
+standard-cli:
+	make -C $(SRC) standard-cli
 
-no-bootstrap:
-	make -C $(SRC) no-bootstrap
+standard-headless:
+	make -C $(SRC) standard-headless
+
+no-bootstrap-headless:
+	make -C $(SRC) no-bootstrap-headless
+
+no-bootstrap-cli:
+	make -C $(SRC) no-bootstrap-cli
 
 objex:
 	make -C $(SRC) objex

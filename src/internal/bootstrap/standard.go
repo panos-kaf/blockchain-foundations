@@ -1,10 +1,9 @@
-//go:build !no_bootstrap
+//go:build standard
 
-package main
+package bootstrap
 
 import (
 	"fmt"
-	"marabu/internal/cli"
 	"marabu/internal/object"
 	"marabu/internal/peer"
 	"net"
@@ -12,7 +11,7 @@ import (
 )
 
 // start server and initiate client connections to bootstrap peers
-func startNode(objectManager *object.ObjectManager) {
+func StartNode(objectManager *object.ObjectManager) {
 	go peer.StartServer(18018, objectManager)
 
 	for _, p := range peer.BOOTSTRAP_PEERS {
@@ -27,7 +26,4 @@ func startNode(objectManager *object.ObjectManager) {
 			}
 		}(p)
 	}
-
-	cli.Start()
-
 }

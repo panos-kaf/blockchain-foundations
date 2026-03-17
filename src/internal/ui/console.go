@@ -1,4 +1,6 @@
-package cli
+//go:build cli
+
+package ui
 
 import (
 	"fmt"

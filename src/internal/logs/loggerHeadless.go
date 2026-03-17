@@ -1,16 +1,17 @@
-//go:build !headless
+//go:build headless
 
 package logs
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"time"
 )
 
-// CLI mode: log only to file, let CLI handle stdout.
+// Headless mode: log to both stdout and log file.
 
 func InitLogs() *os.File {
 
@@ -39,7 +40,9 @@ func InitLogs() *os.File {
 		log.Fatalf("Failed to open log file: %v", err)
 	}
 
-	log.SetOutput(file)
+	multiWriter := io.MultiWriter(os.Stdout, file)
+
+	log.SetOutput(multiWriter)
 	log.SetFlags(log.Ltime | log.Lmicroseconds) // Include microseconds in log timestamps
 
 	fmt.Fprintf(file, "%s%s\t--- Marabu Logs @ %s%s%s ---%s\n", BOLD, MAGENTA, BLUE, time.Now().Format(time.RFC3339), MAGENTA, RESET)
