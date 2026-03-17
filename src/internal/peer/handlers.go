@@ -105,9 +105,10 @@ func (p *Peer) handleObject(msg *messages.ObjectSchema) {
 		p.logErr(messages.OBJECT, m)
 	}
 
-	err := p.ValidateObject(msg.Object, msg.ObjectID)
+	errorCode, err := p.ValidateObject(msg.Object, msg.ObjectID)
 	if err != nil {
 		Err("Received invalid object from peer " + p.addr + ": " + err.Error())
+		p.SendError(errorCode, "Invalid object: "+err.Error())
 		return
 	}
 

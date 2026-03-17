@@ -28,6 +28,7 @@ type Peer struct {
 	onDisconnect      func()
 	onLog             func(messages.MessageType, string)
 	onLogErr          func(messages.MessageType, string)
+	onLogMessage      func(messages.MessageType, bool)
 	role              string
 	objectManager     *object.ObjectManager
 }
@@ -40,7 +41,8 @@ func NewPeer(conn net.Conn,
 	objectManager *object.ObjectManager,
 	onDisconnect func(),
 	onLog func(messages.MessageType, string),
-	onLogErr func(messages.MessageType, string)) *Peer {
+	onLogErr func(messages.MessageType, string),
+	onLogMessage func(messages.MessageType, bool)) *Peer {
 
 	addr := conn.RemoteAddr().String()
 	p := &Peer{
@@ -49,6 +51,7 @@ func NewPeer(conn net.Conn,
 		buffer:        make([]byte, 0),
 		onLog:         onLog,
 		onLogErr:      onLogErr,
+		onLogMessage:  onLogMessage,
 		onDisconnect:  onDisconnect,
 		role:          role,
 		objectManager: objectManager,
@@ -124,6 +127,8 @@ func (p *Peer) handleMessage(raw string) {
 		return
 	}
 
+	p.logMessage(msg.MessageType(), false)
+
 	if !p.handshakeComplete && msg.MessageType() != messages.HELLO {
 		p.logErr("", "Expected HELLO message first")
 		p.SendError(messages.INVALID_HANDSHAKE, "Handshake not completed, expected hello message but received "+string(msg.MessageType()))
@@ -186,6 +191,18 @@ func (p *Peer) logErr(mtype messages.MessageType, msg string) {
 	}
 }
 
+func (p *Peer) logMessage(mtype messages.MessageType, sends bool) {
+	if p.onLogMessage != nil {
+		p.onLogMessage(mtype, sends)
+	} else {
+		direction := "received"
+		if sends {
+			direction = "sent"
+		}
+		fmt.Printf("[%s:%s] %s message: %s\n", p.role, p.addr, direction, mtype)
+	}
+}
+
 func StartServer(port int, objectManager *object.ObjectManager) error {
 
 	addr := net.JoinHostPort("", strconv.Itoa(port))
@@ -193,20 +210,21 @@ func StartServer(port int, objectManager *object.ObjectManager) error {
 	if err != nil {
 		return err
 	}
-	logs.GlobalLog(fmt.Sprintf("Peer server listening on port %d...\n", port))
+	logs.GlobalLog(fmt.Sprintf("Peer server listening on port %d...", port))
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
-			logs.GlobalError(fmt.Sprintf("Server failed to accept connection: %s\n", err))
+			logs.GlobalError(fmt.Sprintf("Server failed to accept connection: %s", err))
 			continue
 		}
 
 		addr := conn.RemoteAddr().String()
 
-		p := NewPeer(conn, "server", objectManager, nil, nil, nil)
+		p := NewPeer(conn, "server", objectManager, nil, nil, nil, nil)
 
 		p.onLog = func(mtype messages.MessageType, msg string) { logs.ServerLog(mtype, msg, p.ID) }
 		p.onLogErr = func(mtype messages.MessageType, msg string) { logs.ServerError(mtype, msg, p.ID) }
+		p.onLogMessage = func(mtype messages.MessageType, sends bool) { logs.ServerMessage(mtype, sends, p.ID, p.addr) }
 		p.onDisconnect = func() { logs.ServerLog("", fmt.Sprintf("Client at %s disconnected", p.addr), p.ID) }
 
 		p.onLog(messages.HELLO, fmt.Sprintf("Accepted connection from %s", addr))
@@ -226,10 +244,11 @@ func StartClient(host string, port int, objectManager *object.ObjectManager, onC
 		return err
 	}
 
-	p := NewPeer(conn, "client", objectManager, nil, nil, nil)
+	p := NewPeer(conn, "client", objectManager, nil, nil, nil, nil)
 
 	p.onLog = func(mtype messages.MessageType, msg string) { logs.ClientLog(mtype, msg, p.ID) }
 	p.onLogErr = func(mtype messages.MessageType, msg string) { logs.ClientError(mtype, msg, p.ID) }
+	p.onLogMessage = func(mtype messages.MessageType, sends bool) { logs.ClientMessage(mtype, sends, p.ID, p.addr) }
 	p.onDisconnect = func() { logs.ClientLog("", fmt.Sprintf("Disconnected from server at %s", p.addr), p.ID) }
 
 	p.onLog("", fmt.Sprintf("Connected to server at %s:%d", host, port))
