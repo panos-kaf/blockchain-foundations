@@ -8,5 +8,5 @@ import (
 )
 
 func StartNode(objectManager *object.ObjectManager) {
-	peer.StartServer(18018, objectManager)
+	go peer.StartServer(18018, objectManager)
 }
