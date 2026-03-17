@@ -15,14 +15,14 @@ func main() {
 	logFile := logs.InitLogs()
 	defer logFile.Close()
 
-	DB_PATH := filepath.Join("..", "db")
+	DB_PATH := filepath.Join(".", "db")
 	objectManager, err := object.NewObjectManager(DB_PATH)
 	if err != nil {
 		fmt.Printf("Error creating object manager: %v\n", err)
 		return
 	}
 
-	PEERS_FILE := filepath.Join("..", "db", "peers.csv")
+	PEERS_FILE := filepath.Join(".", "db", "peers.csv")
 	peersFile, err := os.OpenFile(PEERS_FILE, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		fmt.Printf("Error creating peers file: %v\n", err)
@@ -32,5 +32,5 @@ func main() {
 
 	bootstrap.StartNode(objectManager)
 	ui.Start()
-	
+
 }
