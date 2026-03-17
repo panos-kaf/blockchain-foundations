@@ -1,0 +1,33 @@
+//go:build !no_bootstrap
+
+package main
+
+import (
+	"fmt"
+	"marabu/internal/cli"
+	"marabu/internal/object"
+	"marabu/internal/peer"
+	"net"
+	"strconv"
+)
+
+// start server and initiate client connections to bootstrap peers
+func startNode(objectManager *object.ObjectManager) {
+	go peer.StartServer(18018, objectManager)
+
+	for _, p := range peer.BOOTSTRAP_PEERS {
+		go func(p string) {
+			host, portStr, _ := net.SplitHostPort(p)
+			port, _ := strconv.Atoi(portStr)
+			err := peer.StartClient(host, port, objectManager, func() {
+				// Handle client disconnect if needed
+			})
+			if err != nil {
+				fmt.Printf("Error connecting to peer %s: %v\n", p, err)
+			}
+		}(p)
+	}
+
+	cli.Start()
+
+}
