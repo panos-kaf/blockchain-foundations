@@ -7,32 +7,32 @@ import (
 	"fmt"
 )
 
-func (p *Peer) ValidateObject(obj messages.Object, objectID HashID) error {
+func (p *Peer) ValidateObject(obj messages.Object, objectID HashID) (messages.ErrorCode, error) {
 	switch o := obj.(type) {
 	case *messages.Transaction:
-		fee, err := p.ValidateTransaction(o, objectID)
+		fee, errorCode, err := p.ValidateTransaction(o, objectID)
 		if err != nil {
-			return fmt.Errorf("Transaction validation failed: %v", err)
+			return errorCode, fmt.Errorf("Transaction validation failed: %v", err)
 		}
 		p.log(messages.OBJECT, fmt.Sprintf("Transaction %s is valid with fee %d", objectID, fee))
-		return nil
+		return "", nil
 	case *messages.CoinbaseTransaction:
-		fee, err := p.ValidateCoinbase(o, objectID)
+		fee, errorCode, err := p.ValidateCoinbase(o, objectID)
 		if err != nil {
-			return fmt.Errorf("Coinbase transaction validation failed: %v", err)
+			return errorCode, fmt.Errorf("Coinbase transaction validation failed: %v", err)
 		}
 		p.log(messages.OBJECT, fmt.Sprintf("Coinbase transaction %s is valid with fee %d", objectID, fee))
-		return nil
+		return "", nil
 	case *messages.Block:
 		return p.ValidateBlock(o, objectID)
 	default:
-		return fmt.Errorf("Unknown object type: %T", obj)
+		return messages.INTERNAL_ERROR, fmt.Errorf("Unknown object type: %T", obj)
 	}
 }
 
-func (p *Peer) ValidateTransaction(tx *messages.Transaction, objectID HashID) (int, error) {
+func (p *Peer) ValidateTransaction(tx *messages.Transaction, objectID HashID) (int, messages.ErrorCode, error) {
 	if tx.Type != messages.TRANSACTION {
-		return 0, fmt.Errorf("Invalid object type for transaction: %s", tx.Type)
+		return 0, messages.INTERNAL_ERROR, fmt.Errorf("Invalid object type for transaction: %s", tx.Type)
 	}
 
 	sumInputs, sumOutputs := 0, 0
@@ -42,7 +42,8 @@ func (p *Peer) ValidateTransaction(tx *messages.Transaction, objectID HashID) (i
 		// Find the referenced transaction
 		obj, err := p.objectManager.FindObject(outpoint.Txid)
 		if err != nil {
-			return 0, fmt.Errorf("Failed to find referenced transaction %s for input %d: %v", outpoint.Txid, i, err)
+			err = fmt.Errorf("Failed to find referenced transaction %s for input %d: %v", outpoint.Txid, i, err)
+			return 0, messages.UNKNOWN_OBJECT, err
 		}
 		// Check that the referenced object is indeed a transaction or a coinbase transaction
 
@@ -54,13 +55,13 @@ func (p *Peer) ValidateTransaction(tx *messages.Transaction, objectID HashID) (i
 		case *messages.CoinbaseTransaction:
 			outputs = txObj.Outputs
 		case *messages.Block:
-			return 0, fmt.Errorf("Referenced object %s for input %d is a block, expected transaction", outpoint.Txid, i)
+			return 0, messages.INTERNAL_ERROR, fmt.Errorf("Referenced object %s for input %d is a block, expected transaction", outpoint.Txid, i)
 		default:
-			return 0, fmt.Errorf("Referenced object %s for input %d is of unknown type, expected transaction", outpoint.Txid, i)
+			return 0, messages.INTERNAL_ERROR, fmt.Errorf("Referenced object %s for input %d is of unknown type, expected transaction", outpoint.Txid, i)
 		}
 
 		if outpoint.Index < 0 || outpoint.Index >= len(outputs) {
-			return 0, fmt.Errorf("Invalid output index %d in input %d referencing transaction %s", outpoint.Index, i, outpoint.Txid)
+			return 0, messages.INVALID_TX_OUTPOINT, fmt.Errorf("Invalid output index %d in input %d referencing transaction %s", outpoint.Index, i, outpoint.Txid)
 		}
 		output := outputs[outpoint.Index]
 
@@ -71,7 +72,8 @@ func (p *Peer) ValidateTransaction(tx *messages.Transaction, objectID HashID) (i
 		msg := formatTransactionMessage(tx)
 
 		if !crypto.Verify(pubkey, msg, sig) {
-			return 0, fmt.Errorf("Invalid signature for input %d: does not match referenced output's pubkey", i)
+			err = fmt.Errorf("Invalid signature for input %d: pubkey %s, sig %s", i, pubkey, sig)
+			return 0, messages.INVALID_TX_SIGNATURE, err
 		}
 	}
 
@@ -80,14 +82,22 @@ func (p *Peer) ValidateTransaction(tx *messages.Transaction, objectID HashID) (i
 	}
 
 	if sumOutputs > sumInputs {
-		return 0, fmt.Errorf("Output value %d exceeds input value %d", sumOutputs, sumInputs)
+		return 0, messages.INVALID_TX_CONSERVATION, fmt.Errorf("Output value %d exceeds input value %d", sumOutputs, sumInputs)
 	}
 
 	fee := sumInputs - sumOutputs
-	return fee, nil
-
+	return fee, "", nil
 }
 
+func (p *Peer) ValidateCoinbase(cb *messages.CoinbaseTransaction, objectID HashID) (int, messages.ErrorCode, error) {
+	return 0, "", nil
+}
+
+func (p *Peer) ValidateBlock(blk *messages.Block, objectID HashID) (messages.ErrorCode, error) {
+	return "", nil
+}
+
+// Creates a canonical message with nil signatures for signing/verification
 func formatTransactionMessage(tx *messages.Transaction) []byte {
 	// Create a copy of the transaction with empty signatures for signing/verification
 	txCopy := *tx
@@ -99,12 +109,4 @@ func formatTransactionMessage(tx *messages.Transaction) []byte {
 	// Canonicalize the transaction copy to get the message bytes
 	msgBytes, _ := (messages.Canonicalize(txCopy))
 	return []byte(msgBytes)
-}
-
-func (p *Peer) ValidateCoinbase(cb *messages.CoinbaseTransaction, objectID HashID) (int, error) {
-	return 0, nil
-}
-
-func (p *Peer) ValidateBlock(blk *messages.Block, objectID HashID) error {
-	return nil
 }
