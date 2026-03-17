@@ -43,7 +43,7 @@ func InitLogs() *os.File {
 	multiWriter := io.MultiWriter(os.Stdout, file)
 
 	log.SetOutput(multiWriter)
-	log.SetFlags(log.Ltime | log.Lmicroseconds) // Include microseconds in log timestamps
+	log.SetFlags(log.Ltime)
 
 	fmt.Fprintf(file, "%s%s\t--- Marabu Logs @ %s%s%s ---%s\n", BOLD, MAGENTA, BLUE, time.Now().Format(time.RFC3339), MAGENTA, RESET)
 

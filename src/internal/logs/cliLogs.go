@@ -1,4 +1,4 @@
-//go:build !headless
+//go:build cli
 
 package logs
 
@@ -40,7 +40,7 @@ func InitLogs() *os.File {
 	}
 
 	log.SetOutput(file)
-	log.SetFlags(log.Ltime | log.Lmicroseconds) // Include microseconds in log timestamps
+	log.SetFlags(log.Ltime)
 
 	fmt.Fprintf(file, "%s%s\t--- Marabu Logs @ %s%s%s ---%s\n", BOLD, MAGENTA, BLUE, time.Now().Format(time.RFC3339), MAGENTA, RESET)
 
