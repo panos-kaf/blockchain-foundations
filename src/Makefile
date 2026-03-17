@@ -1,7 +1,7 @@
 BIN=../bin
 MARABU=./cmd/marabu
 
-build: standard-cli standard-headless no-bootstrap-cli no-bootstrap-headless objex
+build: standard-cli standard-headless no-bootstrap-cli no-bootstrap-headless test-obj test-obj-simple
 
 standard-cli:
 	go build -tags "standard cli" -o $(BIN)/marabu-standard-cli $(MARABU)
@@ -15,8 +15,13 @@ no-bootstrap-cli:
 no-bootstrap-headless:
 	go build -tags "no_bootstrap headless" -o $(BIN)/marabu-no-bootstrap-headless $(MARABU)
 
-objex:
-	go build -o $(BIN)/objectExchange ./cmd/testing/objectExchange
+tests: test-obj test-obj-simple
+
+test-obj-simple:
+	go build -o $(BIN)/objectSimple ./cmd/testing/objectSimple
+
+test-obj:
+	go build -o $(BIN)/object ./cmd/testing/object
 
 run:
 	go run $(MARABU)

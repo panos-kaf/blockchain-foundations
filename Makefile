@@ -15,8 +15,15 @@ no-bootstrap-headless:
 no-bootstrap-cli:
 	make -C $(SRC) no-bootstrap-cli
 
-objex:
-	make -C $(SRC) objex
+tests:
+	make -C $(SRC) tests
+
+test-obj:
+	make -C $(SRC) test-obj
+
+test-obj-simple:
+	make -C $(SRC) test-obj-simple
+
 run:
 	make -C $(SRC) run
 
