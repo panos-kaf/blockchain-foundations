@@ -20,31 +20,31 @@ var messageTypeRegistry = map[string]reflect.Type{
 	string(CHAINTIP):    reflect.TypeOf(ChainTipSchema{}),
 }
 
-func UnmarshalMessage(raw string) (Message, error) {
+func UnmarshalMessage(raw string) (Message, error, ErrorCode) {
 	var probe map[string]interface{}
 	if err := json.Unmarshal([]byte(raw), &probe); err != nil {
-		return nil, fmt.Errorf("invalid JSON format: %w", err)
+		return nil, fmt.Errorf("invalid JSON format: %w", err), INVALID_FORMAT
 	}
 	typeVal, ok := probe["type"].(string)
 	if !ok {
-		return nil, fmt.Errorf("missing or invalid 'type' field in message")
+		return nil, fmt.Errorf("missing or invalid 'type' field in message"), INVALID_FORMAT
 	}
 
 	typ, found := messageTypeRegistry[typeVal]
 	if !found {
-		return nil, fmt.Errorf("unknown message type: %s", typeVal)
+		return nil, fmt.Errorf("unknown message type: %s", typeVal), INVALID_FORMAT
 	}
 
 	msgPtr := reflect.New(typ)
 	if err := json.Unmarshal([]byte(raw), msgPtr.Interface()); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal %s message: %w", typeVal, err)
+		return nil, fmt.Errorf("failed to unmarshal %s message: %w", typeVal, err), INVALID_FORMAT
 	}
 
 	// Return as Message interface
 	if m, ok := msgPtr.Interface().(Message); ok {
-		return m, nil
+		return m, nil, ""
 	}
-	return nil, fmt.Errorf("type %s does not implement Message interface", typeVal)
+	return nil, fmt.Errorf("type %s does not implement Message interface", typeVal), INVALID_FORMAT
 }
 
 // Custom UnmarshalJSON for Hash IDs to enforce length and hex format

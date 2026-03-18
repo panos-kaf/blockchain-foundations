@@ -58,7 +58,7 @@ type Block struct {
 // An object is either a Tx, a coinbase Tx, or a block
 type Object interface {
 	ObjectType() ObjectType
-	Validate() error
+	Validate() (error, ErrorCode)
 }
 
 func (t Transaction) ObjectType() ObjectType {
@@ -73,42 +73,42 @@ func (b Block) ObjectType() ObjectType {
 	return BLOCK
 }
 
-func (t Transaction) Validate() error {
+func (t Transaction) Validate() (error, ErrorCode) {
 
-	if err := ValidateObjectType(t.Type); err != nil {
-		return err
+	if err, code := ValidateObjectType(t.Type); err != nil {
+		return err, code
 	}
 	arrLength := len(t.Inputs)
 	if arrLength == 0 {
-		return fmt.Errorf("transaction must have at least one input")
+		return fmt.Errorf("transaction must have at least one input"), INVALID_FORMAT
 	}
 	if arrLength > 1000 {
-		return fmt.Errorf("transaction exceeds maximum number of inputs (1000), got %d", arrLength)
+		return fmt.Errorf("transaction exceeds maximum number of inputs (1000), got %d", arrLength), INVALID_FORMAT
 	}
 	for i, input := range t.Inputs {
-		if err := ValidateNonNegativeInt(input.Outpoint.Index, fmt.Sprintf("inputs[%d].outpoint.index", i)); err != nil {
-			return err
+		if err, code := ValidateNonNegativeInt(input.Outpoint.Index, fmt.Sprintf("inputs[%d].outpoint.index", i)); err != nil {
+			return err, code
 		}
 	}
 
 	arrLength = len(t.Outputs)
 	if arrLength > 1000 {
-		return fmt.Errorf("transaction exceeds maximum number of outputs (1000), got %d", arrLength)
+		return fmt.Errorf("transaction exceeds maximum number of outputs (1000), got %d", arrLength), INVALID_FORMAT
 	}
 	for i, output := range t.Outputs {
-		if err := ValidateNonNegativeInt(output.Value, fmt.Sprintf("outputs[%d].value", i)); err != nil {
-			return err
+		if err, code := ValidateNonNegativeInt(output.Value, fmt.Sprintf("outputs[%d].value", i)); err != nil {
+			return err, code
 		}
 	}
-	return nil
+	return nil, ""
 }
 
-func (c CoinbaseTransaction) Validate() error {
-	return nil
+func (c CoinbaseTransaction) Validate() (error, ErrorCode) {
+	return nil, ""
 }
 
-func (b Block) Validate() error {
-	return nil
+func (b Block) Validate() (error, ErrorCode) {
+	return nil, ""
 }
 
 // -- object constructors --

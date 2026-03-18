@@ -106,20 +106,20 @@ func (p *Peer) handleMessage(raw string) {
 
 	// Unmarshal and validate message
 	var msg messages.Message
-	msg, err := messages.UnmarshalMessage(raw)
+	msg, err, code := messages.UnmarshalMessage(raw)
 
 	if err != nil {
 		p.logErr("", "Invalid message: "+err.Error())
-		p.SendError(messages.INVALID_FORMAT, "Could not parse message as JSON: "+err.Error())
+		p.SendError(code, "Could not parse message as JSON: "+err.Error())
 		if !p.handshakeComplete {
 			p.conn.Close()
 		}
 		return
 	}
 
-	if err := msg.Validate(); err != nil {
-		p.logErr("", "Message validation failed: "+err.Error())
-		p.SendError(messages.INVALID_FORMAT, "Message validation failed: "+err.Error())
+	if err, code := msg.Validate(); err != nil {
+		p.logErr(msg.MessageType(), "Message validation failed: "+err.Error())
+		p.SendError(code, "Message validation failed: "+err.Error())
 
 		if !p.handshakeComplete {
 			p.conn.Close()
@@ -130,7 +130,7 @@ func (p *Peer) handleMessage(raw string) {
 	p.logMessage(msg.MessageType(), false)
 
 	if !p.handshakeComplete && msg.MessageType() != messages.HELLO {
-		p.logErr("", "Expected HELLO message first")
+		p.logErr(msg.MessageType(), "Expected HELLO message first")
 		p.SendError(messages.INVALID_HANDSHAKE, "Handshake not completed, expected hello message but received "+string(msg.MessageType()))
 		p.conn.Close()
 		return

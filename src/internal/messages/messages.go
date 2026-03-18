@@ -7,7 +7,7 @@ import (
 type (
 	Message interface {
 		MessageType() MessageType
-		Validate() error
+		Validate() (error, ErrorCode)
 	}
 
 	MessageType string
