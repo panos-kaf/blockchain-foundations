@@ -29,6 +29,6 @@ run:
 
 clean:
 	$(RM) bin/*
-	$(RM) logs/*
+	$(RM) logs/*.log
 
 rebuild: clean build
