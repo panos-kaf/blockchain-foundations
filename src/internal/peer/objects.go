@@ -67,6 +67,9 @@ func (p *Peer) ValidateTransaction(tx *messages.Transaction, objectID HashID) (i
 
 		sumInputs += output.Value
 
+		if input.Sig == nil {
+			return 0, messages.INVALID_TX_SIGNATURE, fmt.Errorf("Missing signature for input %d referencing transaction %s", i, outpoint.Txid)
+		}
 		sig := string(*input.Sig)
 		pubkey := string(output.Pubkey)
 		msg := formatTransactionMessage(tx)
