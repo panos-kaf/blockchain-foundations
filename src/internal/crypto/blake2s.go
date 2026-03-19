@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"fmt"
+	"marabu/internal/messages"
 
 	"golang.org/x/crypto/blake2s"
 )
@@ -24,4 +25,17 @@ func HashString(s string) (string, error) {
 // HashBytes is a convenience function that takes a byte slice input, computes its BLAKE2s hash, and returns the hash as a hexadecimal string.
 func HashBytes(b []byte) (string, error) {
 	return Hash(b)
+}
+
+// HashObject takes an object, canonicalizes it to JSON, and then computes the BLAKE2s hash of the canonical JSON representation. It returns the hash as a hexadecimal string.
+func HashObject(o messages.Object) (string, error) {
+	raw, err := messages.Canonicalize(o)
+	if err != nil {
+		return "", err
+	}
+	hash, err := HashString(raw)
+	if err != nil {
+		return "", err
+	}
+	return hash, nil
 }
