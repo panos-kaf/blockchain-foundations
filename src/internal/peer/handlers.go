@@ -150,7 +150,7 @@ func (p *Peer) handleObject(msg *ObjectSchema) {
 }
 
 func (p *Peer) handleGetMempool() {
-	p.log(messages.MSG_GETMEMPOOL, "not handled yet")
+	p.log(MSG_GETMEMPOOL, "not handled yet")
 }
 
 func (p *Peer) handleMempool(msg *MempoolSchema) {
@@ -158,7 +158,7 @@ func (p *Peer) handleMempool(msg *MempoolSchema) {
 }
 
 func (p *Peer) handleGetChainTip() {
-	p.log(messages.MSG_GETCHAINTIP, "not handled yet")
+	p.log(MSG_GETCHAINTIP, "not handled yet")
 }
 
 func (p *Peer) handleChainTip(msg *ChainTipSchema) {

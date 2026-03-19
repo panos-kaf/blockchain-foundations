@@ -36,6 +36,9 @@ var (
 	E_INVALID_BLOCK_TIMESTAMP = messages.E_INVALID_BLOCK_TIMESTAMP
 	E_INVALID_BLOCK_POW       = messages.E_INVALID_BLOCK_POW
 	E_INVALID_GENESIS         = messages.E_INVALID_GENESIS
+
+	OBJ_BLOCK       = messages.OBJ_BLOCK
+	OBJ_TRANSACTION = messages.OBJ_TRANSACTION
 )
 
 type (
@@ -59,6 +62,10 @@ type (
 	Transaction         = messages.Transaction
 	CoinbaseTransaction = messages.CoinbaseTransaction
 	Block               = messages.Block
+
+	TxOutput = messages.TxOutput
+	TxInput  = messages.TxInput
+	Outpoint = messages.Outpoint
 
 	HashID    = messages.HashID
 	Signature = messages.Signature
