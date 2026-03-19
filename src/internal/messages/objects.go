@@ -26,8 +26,8 @@ type TxOutput struct {
 type ObjectType string
 
 const (
-	BLOCK       ObjectType = "block"
-	TRANSACTION ObjectType = "transaction"
+	OBJ_BLOCK       ObjectType = "block"
+	OBJ_TRANSACTION ObjectType = "transaction"
 )
 
 type Transaction struct {
@@ -61,15 +61,15 @@ type Object interface {
 }
 
 func (t Transaction) ObjectType() ObjectType {
-	return TRANSACTION
+	return OBJ_TRANSACTION
 }
 
 func (c CoinbaseTransaction) ObjectType() ObjectType {
-	return TRANSACTION
+	return OBJ_TRANSACTION
 }
 
 func (b Block) ObjectType() ObjectType {
-	return BLOCK
+	return OBJ_BLOCK
 }
 
 func (t Transaction) Validate() (error, ErrorCode) {
@@ -143,7 +143,7 @@ func makeTxOutput(pubkey HashID, value int) TxOutput {
 
 func makeTransaction(inputs []TxInput, outputs []TxOutput) Transaction {
 	return Transaction{
-		Type:    TRANSACTION,
+		Type:    OBJ_TRANSACTION,
 		Inputs:  inputs,
 		Outputs: outputs,
 	}
@@ -151,7 +151,7 @@ func makeTransaction(inputs []TxInput, outputs []TxOutput) Transaction {
 
 func makeCoinbaseTransaction(height int, outputs []TxOutput) CoinbaseTransaction {
 	return CoinbaseTransaction{
-		Type:    TRANSACTION,
+		Type:    OBJ_TRANSACTION,
 		Height:  &height,
 		Outputs: outputs,
 	}
@@ -159,7 +159,7 @@ func makeCoinbaseTransaction(height int, outputs []TxOutput) CoinbaseTransaction
 
 func makeBlock(T HashID, created int, miner *string, nonce HashID, note *string, previd *HashID, studentids *[]string, txids []string) Block {
 	return Block{
-		Type:       BLOCK,
+		Type:       OBJ_BLOCK,
 		T:          T,
 		Created:    created,
 		Miner:      miner,

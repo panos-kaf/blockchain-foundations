@@ -69,7 +69,7 @@ func (ot *ObjectType) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	switch ObjectType(s) {
-	case BLOCK, TRANSACTION:
+	case OBJ_BLOCK, OBJ_TRANSACTION:
 		*ot = ObjectType(s)
 		return nil
 	default:
@@ -162,14 +162,14 @@ func (o *ObjectSchema) UnmarshalJSON(data []byte) error {
 
 	// populate the Object field based on the type of the inner object
 	switch typeProbe.Type {
-	case BLOCK:
+	case OBJ_BLOCK:
 		var b Block
 		if err := json.Unmarshal(o.RawObject, &b); err != nil {
 			return fmt.Errorf("failed to unmarshal block object: %w", err)
 		}
 		o.Object = &b
 
-	case TRANSACTION:
+	case OBJ_TRANSACTION:
 
 		var cbProbe struct {
 			Height *int `json:"height"`
