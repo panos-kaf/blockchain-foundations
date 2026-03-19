@@ -3,6 +3,7 @@ package messages
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"sort"
 )
 
@@ -74,4 +75,29 @@ func Canonicalize(v interface{}) (string, error) {
 		return "", err
 	}
 	return string(canon), nil
+}
+
+// wraps the canonicalization process for the Message interface,
+// readying the message for message contrsuction to be sent over the network.
+func CanonicalizeMessage(msg Message) (string, error) {
+
+	canon, err := Canonicalize(msg)
+	if err != nil {
+		return "", fmt.Errorf("Error parsing message: %w", err)
+	}
+	return canon + "\n", nil
+}
+
+// Creates a canonical transaction with nil signatures for signing/verification
+func TxMessageForSignature(tx *Transaction) []byte {
+	// Create a copy of the transaction with empty signatures for signing/verification
+	txCopy := *tx
+	txCopy.Inputs = make([]TxInput, len(tx.Inputs))
+	copy(txCopy.Inputs, tx.Inputs)
+	for i := range txCopy.Inputs {
+		txCopy.Inputs[i].Sig = nil
+	}
+	// Canonicalize the transaction copy to get the message bytes
+	msgBytes, _ := (Canonicalize(txCopy))
+	return []byte(msgBytes)
 }
