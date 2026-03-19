@@ -26,10 +26,10 @@ type Peer struct {
 	buffer            []byte
 	handshakeComplete bool
 	onDisconnect      func()
-	onLog             func(messages.MessageType, string)
-	onLogErr          func(messages.MessageType, string)
-	onLogMessage      func(messages.MessageType, bool)
-	onLogMessageError func(messages.MessageType, string, bool)
+	onLog             func(MessageType, string)
+	onLogErr          func(MessageType, string)
+	onLogMessage      func(MessageType, ErrorCode, bool)
+	onLogMessageError func(MessageType, ErrorCode, string, bool)
 	role              string
 	objectManager     *object.ObjectManager
 }
@@ -41,10 +41,10 @@ func NewPeer(conn net.Conn,
 	role string,
 	objectManager *object.ObjectManager,
 	onDisconnect func(),
-	onLog func(messages.MessageType, string),
-	onLogErr func(messages.MessageType, string),
-	onLogMessage func(messages.MessageType, bool),
-	onLogMessageError func(messages.MessageType, string, bool)) *Peer {
+	onLog func(MessageType, string),
+	onLogErr func(MessageType, string),
+	onLogMessage func(MessageType, ErrorCode, bool),
+	onLogMessageError func(MessageType, ErrorCode, string, bool)) *Peer {
 
 	addr := conn.RemoteAddr().String()
 	p := &Peer{
@@ -108,7 +108,7 @@ func (p *Peer) handleMessage(raw string) {
 	}
 
 	// Unmarshal and validate message
-	var msg messages.Message
+	var msg Message
 	msg, err, code := messages.UnmarshalMessage(raw)
 
 	if err != nil {
@@ -121,7 +121,7 @@ func (p *Peer) handleMessage(raw string) {
 	}
 
 	if err, code := msg.Validate(); err != nil {
-		p.logMessageError(msg.MessageType(), "Message validation failed: "+err.Error(), false)
+		p.logMessageError(msg.MessageType(), code, "Message validation failed: "+err.Error(), false)
 		p.SendError(code, "Message validation failed: "+err.Error())
 
 		if !p.handshakeComplete {
@@ -130,42 +130,42 @@ func (p *Peer) handleMessage(raw string) {
 		return
 	}
 
-	p.logMessage(msg.MessageType(), false)
+	p.logMessage(msg.MessageType(), code, false)
 
-	if !p.handshakeComplete && msg.MessageType() != messages.HELLO {
-		p.logMessageError(msg.MessageType(), "Expected HELLO message first", false)
-		p.SendError(messages.INVALID_HANDSHAKE, "Handshake not completed, expected hello message but received "+string(msg.MessageType()))
+	if !p.handshakeComplete && msg.MessageType() != messages.MSG_HELLO {
+		p.logMessageError(msg.MessageType(), messages.E_INVALID_HANDSHAKE, "Expected MSG_HELLO message first", false)
+		p.SendError(messages.E_INVALID_HANDSHAKE, "Handshake not completed, expected hello message but received "+string(msg.MessageType()))
 		p.conn.Close()
 		return
 	}
 
 	// Dispatch based on type
 	switch m := msg.(type) {
-	case *messages.HelloSchema:
+	case *HelloSchema:
 		p.handleHello(m)
-	case *messages.ErrorSchema:
+	case *ErrorSchema:
 		p.handleError(m)
-	case *messages.GetPeersSchema:
+	case *GetPeersSchema:
 		p.handleGetPeers()
-	case *messages.PeersSchema:
+	case *PeersSchema:
 		p.handlePeers(m)
-	case *messages.GetObjectSchema:
+	case *GetObjectSchema:
 		p.handleGetObject(m)
-	case *messages.IHaveObjectSchema:
+	case *IHaveObjectSchema:
 		p.handleIHaveObject(m)
-	case *messages.ObjectSchema:
+	case *ObjectSchema:
 		p.handleObject(m)
-	case *messages.GetMempoolSchema:
+	case *GetMempoolSchema:
 		p.handleGetMempool()
-	case *messages.MempoolSchema:
+	case *MempoolSchema:
 		p.handleMempool(m)
-	case *messages.GetChainTipSchema:
+	case *GetChainTipSchema:
 		p.handleGetChainTip()
-	case *messages.ChainTipSchema:
+	case *ChainTipSchema:
 		p.handleChainTip(m)
 	default:
 		p.logErr("", "Unknown message type")
-		p.SendError(messages.INVALID_FORMAT, "Unknown protocol message")
+		p.SendError(messages.E_INVALID_FORMAT, "Unknown protocol message")
 		p.conn.Close()
 	}
 }
@@ -178,7 +178,7 @@ func globalError(msg string) {
 	logs.GlobalError(msg)
 }
 
-func (p *Peer) log(mtype messages.MessageType, msg string) {
+func (p *Peer) log(mtype MessageType, msg string) {
 	if p.onLog != nil {
 		p.onLog(mtype, msg)
 	} else {
@@ -186,17 +186,17 @@ func (p *Peer) log(mtype messages.MessageType, msg string) {
 	}
 }
 
-func (p *Peer) logErr(mtype messages.MessageType, msg string) {
+func (p *Peer) logErr(mtype MessageType, msg string) {
 	if p.onLogErr != nil {
 		p.onLogErr(mtype, msg)
 	} else {
-		fmt.Println("[" + p.role + ":" + p.addr + "] ERROR: " + msg)
+		fmt.Println("[" + p.role + ":" + p.addr + "] MSG_ERROR: " + msg)
 	}
 }
 
-func (p *Peer) logMessage(mtype messages.MessageType, sends bool) {
+func (p *Peer) logMessage(mtype MessageType, code ErrorCode, sends bool) {
 	if p.onLogMessage != nil {
-		p.onLogMessage(mtype, sends)
+		p.onLogMessage(mtype, code, sends)
 	} else {
 		direction := "received"
 		if sends {
@@ -206,9 +206,9 @@ func (p *Peer) logMessage(mtype messages.MessageType, sends bool) {
 	}
 }
 
-func (p *Peer) logMessageError(mtype messages.MessageType, msg string, sends bool) {
+func (p *Peer) logMessageError(mtype MessageType, code ErrorCode, msg string, sends bool) {
 	if p.onLogMessageError != nil {
-		p.onLogMessageError(mtype, msg, sends)
+		p.onLogMessageError(mtype, code, msg, sends)
 	} else {
 		direction := "receiving"
 		if sends {
@@ -237,15 +237,17 @@ func StartServer(port int, objectManager *object.ObjectManager) error {
 
 		p := NewPeer(conn, "server", objectManager, nil, nil, nil, nil, nil)
 
-		p.onLog = func(mtype messages.MessageType, msg string) { logs.ServerLog(mtype, msg, p.ID) }
-		p.onLogErr = func(mtype messages.MessageType, msg string) { logs.ServerError(mtype, msg, p.ID) }
-		p.onLogMessage = func(mtype messages.MessageType, sends bool) { logs.ServerMessage(mtype, sends, p.ID, p.addr) }
-		p.onLogMessageError = func(mtype messages.MessageType, msg string, sends bool) {
-			logs.ServerMessageError(mtype, msg, sends, p.ID, p.addr)
+		p.onLog = func(mtype MessageType, msg string) { logs.ServerLog(mtype, msg, p.ID) }
+		p.onLogErr = func(mtype MessageType, msg string) { logs.ServerError(mtype, msg, p.ID) }
+		p.onLogMessage = func(mtype MessageType, code ErrorCode, sends bool) {
+			logs.ServerMessage(mtype, code, sends, p.ID, p.addr)
+		}
+		p.onLogMessageError = func(mtype MessageType, code ErrorCode, msg string, sends bool) {
+			logs.ServerMessageError(mtype, code, msg, sends, p.ID, p.addr)
 		}
 		p.onDisconnect = func() { logs.ServerLog("", fmt.Sprintf("Client at %s disconnected", p.addr), p.ID) }
 
-		p.onLog(messages.HELLO, fmt.Sprintf("Accepted connection from %s", addr))
+		p.onLog(messages.MSG_HELLO, fmt.Sprintf("Accepted connection from %s", addr))
 
 		p.Greet()
 	}
@@ -264,11 +266,13 @@ func StartClient(host string, port int, objectManager *object.ObjectManager, onC
 
 	p := NewPeer(conn, "client", objectManager, nil, nil, nil, nil, nil)
 
-	p.onLog = func(mtype messages.MessageType, msg string) { logs.ClientLog(mtype, msg, p.ID) }
-	p.onLogErr = func(mtype messages.MessageType, msg string) { logs.ClientError(mtype, msg, p.ID) }
-	p.onLogMessage = func(mtype messages.MessageType, sends bool) { logs.ClientMessage(mtype, sends, p.ID, p.addr) }
-	p.onLogMessageError = func(mtype messages.MessageType, msg string, sends bool) {
-		logs.ClientMessageError(mtype, msg, sends, p.ID, p.addr)
+	p.onLog = func(mtype MessageType, msg string) { logs.ClientLog(mtype, msg, p.ID) }
+	p.onLogErr = func(mtype MessageType, msg string) { logs.ClientError(mtype, msg, p.ID) }
+	p.onLogMessage = func(mtype MessageType, code ErrorCode, sends bool) {
+		logs.ClientMessage(mtype, code, sends, p.ID, p.addr)
+	}
+	p.onLogMessageError = func(mtype MessageType, code ErrorCode, msg string, sends bool) {
+		logs.ClientMessageError(mtype, code, msg, sends, p.ID, p.addr)
 	}
 	p.onDisconnect = func() { logs.ClientLog("", fmt.Sprintf("Disconnected from server at %s", p.addr), p.ID) }
 

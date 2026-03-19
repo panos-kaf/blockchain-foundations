@@ -23,7 +23,7 @@ func MakeHelloMessage() (string, error) {
 	agent := "marabobos"
 
 	return CanonicalizeMessage(HelloSchema{
-		Type:    HELLO,
+		Type:    MSG_HELLO,
 		Version: version,
 		Agent:   &agent,
 	})
@@ -31,7 +31,7 @@ func MakeHelloMessage() (string, error) {
 
 func MakeErrorMessage(name ErrorCode, description string) (string, error) {
 	return CanonicalizeMessage(ErrorSchema{
-		Type:        ERROR,
+		Type:        MSG_ERROR,
 		Name:        name,
 		Description: description,
 	})
@@ -39,27 +39,27 @@ func MakeErrorMessage(name ErrorCode, description string) (string, error) {
 
 func MakeGetPeersMessage() (string, error) {
 	return CanonicalizeMessage(GetPeersSchema{
-		Type: GETPEERS,
+		Type: MSG_GETPEERS,
 	})
 }
 
 func MakePeersMessage(peers []string) (string, error) {
 	return CanonicalizeMessage(PeersSchema{
-		Type:  PEERS,
+		Type:  MSG_PEERS,
 		Peers: peers,
 	})
 }
 
 func MakeGetObjectMessage(objectID HashID) (string, error) {
 	return CanonicalizeMessage(GetObjectSchema{
-		Type:     GETOBJECT,
+		Type:     MSG_GETOBJECT,
 		ObjectID: objectID,
 	})
 }
 
 func MakeIHaveObjectMessage(objectID HashID) (string, error) {
 	return CanonicalizeMessage(IHaveObjectSchema{
-		Type:     IHAVEOBJECT,
+		Type:     MSG_IHAVEOBJECT,
 		ObjectID: objectID,
 	})
 }
@@ -70,33 +70,33 @@ func MakeObjectMessage(obj Object) (string, error) {
 		return "", err
 	}
 	return CanonicalizeMessage(ObjectSchema{
-		Type:      OBJECT,
+		Type:      MSG_OBJECT,
 		RawObject: json.RawMessage(raw),
 	})
 }
 
 func MakeGetMempoolMessage() (string, error) {
 	return CanonicalizeMessage(GetMempoolSchema{
-		Type: GETMEMPOOL,
+		Type: MSG_GETMEMPOOL,
 	})
 }
 
 func MakeMempoolMessage(Txids []HashID) (string, error) {
 	return CanonicalizeMessage(MempoolSchema{
-		Type:  MEMPOOL,
+		Type:  MSG_MEMPOOL,
 		Txids: Txids,
 	})
 }
 
 func MakeGetChainTipMessage() (string, error) {
 	return CanonicalizeMessage(GetChainTipSchema{
-		Type: GETCHAINTIP,
+		Type: MSG_GETCHAINTIP,
 	})
 }
 
 func MakeChainTipMessage(BlockID HashID) (string, error) {
 	return CanonicalizeMessage(ChainTipSchema{
-		Type:  CHAINTIP,
+		Type:  MSG_CHAINTIP,
 		Block: BlockID,
 	})
 }

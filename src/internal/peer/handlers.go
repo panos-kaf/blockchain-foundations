@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-func (p *Peer) handleHello(msg *messages.HelloSchema) {
+func (p *Peer) handleHello(msg *HelloSchema) {
 	if msg.Agent != nil {
 		p.log(msg.Type, *msg.Agent+" ("+p.addr+") says hello, version: "+msg.Version)
 	} else {
@@ -15,7 +15,7 @@ func (p *Peer) handleHello(msg *messages.HelloSchema) {
 	p.handshakeComplete = true
 }
 
-func (p *Peer) handleError(msg *messages.ErrorSchema) {
+func (p *Peer) handleError(msg *ErrorSchema) {
 	p.log(msg.Type, string(msg.Name)+", peer: "+p.addr+", description: "+msg.Description+")")
 }
 
@@ -26,22 +26,22 @@ func (p *Peer) handleGetPeers() {
 	}
 	err := p.SendPeers(peers)
 	if err != nil {
-		p.logErr(messages.PEERS, err.Error())
+		p.logErr(MSG_PEERS, err.Error())
 	}
 }
 
-func (p *Peer) handlePeers(msg *messages.PeersSchema) {
-	p.log(messages.PEERS, "Peer "+p.addr+" sent "+strconv.Itoa(len(msg.Peers))+" peers")
+func (p *Peer) handlePeers(msg *PeersSchema) {
+	p.log(MSG_PEERS, "Peer "+p.addr+" sent "+strconv.Itoa(len(msg.Peers))+" peers")
 	AppendPeers(msg.Peers, p.addr)
 }
 
-func (p *Peer) handleGetObject(msg *messages.GetObjectSchema) {
+func (p *Peer) handleGetObject(msg *GetObjectSchema) {
 
 	Log := func(m string) {
-		p.log(messages.GETOBJECT, m)
+		p.log(MSG_GETOBJECT, m)
 	}
 	Err := func(m string) {
-		p.logErr(messages.GETOBJECT, m)
+		p.logErr(MSG_GETOBJECT, m)
 	}
 	ID := msg.ObjectID
 	Log("Peer: " + p.addr + " requested object: " + string(ID))
@@ -63,18 +63,18 @@ func (p *Peer) handleGetObject(msg *messages.GetObjectSchema) {
 			Err("Error sending object: " + err.Error())
 		}
 	} else {
-		Log("We do not have object " + string(ID) + ", cannot fulfill GETOBJECT request from peer " + p.addr)
-		p.SendError(messages.UNKNOWN_OBJECT, "Object not found: "+string(ID))
+		Log("We do not have object " + string(ID) + ", cannot fulfill MSG_GETOBJECT request from peer " + p.addr)
+		p.SendError(E_UNKNOWN_OBJECT, "Object not found: "+string(ID))
 	}
 }
 
-func (p *Peer) handleIHaveObject(msg *messages.IHaveObjectSchema) {
+func (p *Peer) handleIHaveObject(msg *IHaveObjectSchema) {
 
 	Log := func(m string) {
-		p.log(messages.IHAVEOBJECT, m)
+		p.log(MSG_IHAVEOBJECT, m)
 	}
 	Err := func(m string) {
-		p.logErr(messages.IHAVEOBJECT, m)
+		p.logErr(MSG_IHAVEOBJECT, m)
 	}
 
 	ID := msg.ObjectID
@@ -91,18 +91,18 @@ func (p *Peer) handleIHaveObject(msg *messages.IHaveObjectSchema) {
 		Log("We do not have object " + string(ID) + ", requesting it from peer " + p.addr)
 		err := p.SendGetObject(ID)
 		if err != nil {
-			Err("Error sending GETOBJECT: " + err.Error())
+			Err("Error sending MSG_GETOBJECT: " + err.Error())
 		}
 	}
 }
 
-func (p *Peer) handleObject(msg *messages.ObjectSchema) {
+func (p *Peer) handleObject(msg *ObjectSchema) {
 
 	Log := func(m string) {
-		p.log(messages.OBJECT, m)
+		p.log(MSG_OBJECT, m)
 	}
 	Err := func(m string) {
-		p.logErr(messages.OBJECT, m)
+		p.logErr(MSG_OBJECT, m)
 	}
 
 	errorCode, err := p.ValidateObject(msg.Object)
@@ -120,7 +120,7 @@ func (p *Peer) handleObject(msg *messages.ObjectSchema) {
 
 	hashID := HashID(ID)
 
-	Log("Received OBJECT with ID " + ID + " from peer: " + p.addr)
+	Log("Received MSG_OBJECT with ID " + ID + " from peer: " + p.addr)
 
 	exists, err := p.objectManager.Exists(hashID)
 	if err != nil {
@@ -142,25 +142,25 @@ func (p *Peer) handleObject(msg *messages.ObjectSchema) {
 		// gossip!
 		advertisement, err := messages.MakeIHaveObjectMessage(hashID)
 		if err != nil {
-			Err("Error creating IHAVEOBJECT message: " + err.Error())
+			Err("Error creating MSG_IHAVEOBJECT message: " + err.Error())
 			return
 		}
-		Broadcast(messages.IHAVEOBJECT, advertisement, err)
+		Broadcast(MSG_IHAVEOBJECT, E_NONE, advertisement, err)
 	}
 }
 
 func (p *Peer) handleGetMempool() {
-	p.log(messages.GETMEMPOOL, "not handled yet")
+	p.log(messages.MSG_GETMEMPOOL, "not handled yet")
 }
 
-func (p *Peer) handleMempool(msg *messages.MempoolSchema) {
+func (p *Peer) handleMempool(msg *MempoolSchema) {
 	p.log(msg.Type, "not handled yet")
 }
 
 func (p *Peer) handleGetChainTip() {
-	p.log(messages.GETCHAINTIP, "not handled yet")
+	p.log(messages.MSG_GETCHAINTIP, "not handled yet")
 }
 
-func (p *Peer) handleChainTip(msg *messages.ChainTipSchema) {
+func (p *Peer) handleChainTip(msg *ChainTipSchema) {
 	p.log(msg.Type, "not handled yet")
 }

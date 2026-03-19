@@ -74,15 +74,12 @@ func (b Block) ObjectType() ObjectType {
 
 func (t Transaction) Validate() (error, ErrorCode) {
 
-	if err, code := ValidateObjectType(t.Type); err != nil {
-		return err, code
-	}
 	arrLength := len(t.Inputs)
 	if arrLength == 0 {
-		return fmt.Errorf("transaction must have at least one input"), INVALID_FORMAT
+		return fmt.Errorf("transaction must have at least one input"), E_INVALID_FORMAT
 	}
 	if arrLength > 1000 {
-		return fmt.Errorf("transaction exceeds maximum number of inputs (1000), got %d", arrLength), INVALID_FORMAT
+		return fmt.Errorf("transaction exceeds maximum number of inputs (1000), got %d", arrLength), E_INVALID_FORMAT
 	}
 	for i, input := range t.Inputs {
 		if err, code := ValidateNonNegativeInt(input.Outpoint.Index, fmt.Sprintf("inputs[%d].outpoint.index", i)); err != nil {
@@ -91,42 +88,38 @@ func (t Transaction) Validate() (error, ErrorCode) {
 	}
 	for i, output := range t.Outputs {
 		if output.Value == nil {
-			return fmt.Errorf("missing value for output %d", i), INVALID_FORMAT
+			return fmt.Errorf("missing value for output %d", i), E_INVALID_FORMAT
 		}
 	}
 
 	arrLength = len(t.Outputs)
 	if arrLength > 1000 {
-		return fmt.Errorf("transaction exceeds maximum number of outputs (1000), got %d", arrLength), INVALID_FORMAT
+		return fmt.Errorf("transaction exceeds maximum number of outputs (1000), got %d", arrLength), E_INVALID_FORMAT
 	}
 	for i, output := range t.Outputs {
 		if err, code := ValidateNonNegativeInt(*output.Value, fmt.Sprintf("outputs[%d].value", i)); err != nil {
 			return err, code
 		}
 	}
-	return nil, ""
+	return nil, E_NONE
 }
 
 func (c CoinbaseTransaction) Validate() (error, ErrorCode) {
 
-	if err, code := ValidateObjectType(c.Type); err != nil {
-		return err, code
-	}
-
 	if c.Height == nil {
-		return fmt.Errorf("missing height for coinbase transaction"), INVALID_FORMAT
+		return fmt.Errorf("missing height for coinbase transaction"), E_INVALID_FORMAT
 	}
 
 	for i, output := range c.Outputs {
 		if output.Value == nil {
-			return fmt.Errorf("missing value for output %d", i), INVALID_FORMAT
+			return fmt.Errorf("missing value for output %d", i), E_INVALID_FORMAT
 		}
 	}
-	return nil, ""
+	return nil, E_NONE
 }
 
 func (b Block) Validate() (error, ErrorCode) {
-	return nil, ""
+	return nil, E_NONE
 }
 
 // -- object constructors --

@@ -23,17 +23,17 @@ const (
 
 func MessageTypeColor(mtype messages.MessageType) string {
 	switch mtype {
-	case messages.HELLO:
+	case messages.MSG_HELLO:
 		return GREEN
-	case messages.ERROR:
+	case messages.MSG_ERROR:
 		return RED
-	case messages.GETPEERS, messages.PEERS:
+	case messages.MSG_GETPEERS, messages.MSG_PEERS:
 		return CYAN
-	case messages.GETOBJECT, messages.IHAVEOBJECT, messages.OBJECT:
+	case messages.MSG_GETOBJECT, messages.MSG_IHAVEOBJECT, messages.MSG_OBJECT:
 		return YELLOW
-	case messages.GETMEMPOOL, messages.MEMPOOL:
+	case messages.MSG_GETMEMPOOL, messages.MSG_MEMPOOL:
 		return BLUE
-	case messages.GETCHAINTIP, messages.CHAINTIP:
+	case messages.MSG_GETCHAINTIP, messages.MSG_CHAINTIP:
 		return MAGENTA
 	default:
 		return RESET
@@ -41,7 +41,7 @@ func MessageTypeColor(mtype messages.MessageType) string {
 }
 
 func Log(mtype messages.MessageType, msg string, id int, color string) {
-	if mtype != "" {
+	if mtype != messages.MSG_NONE {
 		msgcolor := MessageTypeColor(mtype)
 		msg = fmt.Sprintf("%s%s[%d]%s[%s] %s%s", BOLD, color, id, msgcolor, mtype, RESET, msg)
 	} else {
@@ -55,7 +55,7 @@ func Error(mtype messages.MessageType, msg string, id int, color string) {
 	Log(mtype, fmt.Sprintf("%sError: %s%s", RED, msg, RESET), id, color)
 }
 
-func Message(mtype messages.MessageType, sends bool, id int, color string, addr string) {
+func Message(mtype messages.MessageType, errorCode messages.ErrorCode, sends bool, id int, color string, addr string) {
 	var direction string
 	if sends {
 		direction = CYAN + "[-->]" + RESET
@@ -64,11 +64,16 @@ func Message(mtype messages.MessageType, sends bool, id int, color string, addr 
 	}
 	msgcolor := MessageTypeColor(mtype)
 
-	// example format: [Peer 1][HELLO][-->][127.0.0.1:12345]
-	log.Printf("%s%s[%d]%s[%s]%s%s[%s]%s", BOLD, color, id, msgcolor, mtype, direction, WHITE, addr, RESET)
+	label := string(mtype)
+	if mtype == messages.MSG_ERROR && errorCode != messages.E_NONE {
+		label = string(errorCode)
+	}
+
+	// example format: [Peer 1][MSG_HELLO][-->][127.0.0.1:12345]
+	log.Printf("%s%s[%d]%s[%s]%s%s[%s]%s", BOLD, color, id, msgcolor, label, direction, WHITE, addr, RESET)
 }
 
-func MessageError(mtype messages.MessageType, msg string, sends bool, id int, color string, addr string) {
+func MessageError(mtype messages.MessageType, errorCode messages.ErrorCode, msg string, sends bool, id int, color string, addr string) {
 	var direction string
 	if sends {
 		direction = CYAN + "[-->]" + RESET
@@ -77,7 +82,11 @@ func MessageError(mtype messages.MessageType, msg string, sends bool, id int, co
 	}
 	msgcolor := MessageTypeColor(mtype)
 
-	log.Printf("%s%s[%d]%s[%s]%s%s[%s] %sError: %s%s", BOLD, color, id, msgcolor, mtype, direction, WHITE, addr, RED, msg, RESET)
+	label := string(mtype)
+	if mtype == messages.MSG_ERROR && errorCode != messages.E_NONE {
+		label = string(errorCode)
+	}
+	log.Printf("%s%s[%d]%s[%s]%s%s[%s] %sError: %s%s", BOLD, color, id, msgcolor, label, direction, WHITE, addr, RED, msg, RESET)
 }
 
 // Peer-specific log functions
@@ -94,20 +103,20 @@ func ServerLog(mtype messages.MessageType, msg string, id int) {
 	Log(mtype, msg, id, MAGENTA)
 }
 
-func ClientMessage(mtype messages.MessageType, sends bool, id int, addr string) {
-	Message(mtype, sends, id, BLUE, addr)
+func ClientMessage(mtype messages.MessageType, errorCode messages.ErrorCode, sends bool, id int, addr string) {
+	Message(mtype, errorCode, sends, id, BLUE, addr)
 }
 
-func ClientMessageError(mtype messages.MessageType, msg string, sends bool, id int, addr string) {
-	MessageError(mtype, msg, sends, id, BLUE, addr)
+func ClientMessageError(mtype messages.MessageType, errorCode messages.ErrorCode, msg string, sends bool, id int, addr string) {
+	MessageError(mtype, errorCode, msg, sends, id, BLUE, addr)
 }
 
-func ServerMessage(mtype messages.MessageType, sends bool, id int, addr string) {
-	Message(mtype, sends, id, MAGENTA, addr)
+func ServerMessage(mtype messages.MessageType, errorCode messages.ErrorCode, sends bool, id int, addr string) {
+	Message(mtype, errorCode, sends, id, MAGENTA, addr)
 }
 
-func ServerMessageError(mtype messages.MessageType, msg string, sends bool, id int, addr string) {
-	MessageError(mtype, msg, sends, id, MAGENTA, addr)
+func ServerMessageError(mtype messages.MessageType, errorCode messages.ErrorCode, msg string, sends bool, id int, addr string) {
+	MessageError(mtype, errorCode, msg, sends, id, MAGENTA, addr)
 }
 
 func ServerError(mtype messages.MessageType, msg string, id int) {

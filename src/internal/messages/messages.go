@@ -17,30 +17,32 @@ type (
 )
 
 const (
-	HELLO       MessageType = "hello"
-	ERROR       MessageType = "error"
-	GETPEERS    MessageType = "getpeers"
-	PEERS       MessageType = "peers"
-	GETOBJECT   MessageType = "getobject"
-	IHAVEOBJECT MessageType = "ihaveobject"
-	OBJECT      MessageType = "object"
-	GETMEMPOOL  MessageType = "getmempool"
-	MEMPOOL     MessageType = "mempool"
-	GETCHAINTIP MessageType = "getchaintip"
-	CHAINTIP    MessageType = "chaintip"
+	MSG_NONE        MessageType = ""
+	MSG_HELLO       MessageType = "hello"
+	MSG_ERROR       MessageType = "error"
+	MSG_GETPEERS    MessageType = "getpeers"
+	MSG_PEERS       MessageType = "peers"
+	MSG_GETOBJECT   MessageType = "getobject"
+	MSG_IHAVEOBJECT MessageType = "ihaveobject"
+	MSG_OBJECT      MessageType = "object"
+	MSG_GETMEMPOOL  MessageType = "getmempool"
+	MSG_MEMPOOL     MessageType = "mempool"
+	MSG_GETCHAINTIP MessageType = "getchaintip"
+	MSG_CHAINTIP    MessageType = "chaintip"
 
-	INTERNAL_ERROR          ErrorCode = "INTERNAL_ERROR"
-	INVALID_FORMAT          ErrorCode = "INVALID_FORMAT"
-	UNKNOWN_OBJECT          ErrorCode = "UNKNOWN_OBJECT"
-	UNFINDABLE_OBJECT       ErrorCode = "UNFINDABLE_OBJECT"
-	INVALID_HANDSHAKE       ErrorCode = "INVALID_HANDSHAKE"
-	INVALID_TX_OUTPOINT     ErrorCode = "INVALID_TX_OUTPOINT"
-	INVALID_TX_SIGNATURE    ErrorCode = "INVALID_TX_SIGNATURE"
-	INVALID_TX_CONSERVATION ErrorCode = "INVALID_TX_CONSERVATION"
-	INVALID_BLOCK_COINBASE  ErrorCode = "INVALID_BLOCK_COINBASE"
-	INVALID_BLOCK_TIMESTAMP ErrorCode = "INVALID_BLOCK_TIMESTAMP"
-	INVALID_BLOCK_POW       ErrorCode = "INVALID_BLOCK_POW"
-	INVALID_GENESIS         ErrorCode = "INVALID_GENESIS"
+	E_NONE                    ErrorCode = ""
+	E_INTERNAL_ERROR          ErrorCode = "E_INTERNAL_ERROR"
+	E_INVALID_FORMAT          ErrorCode = "E_INVALID_FORMAT"
+	E_UNKNOWN_OBJECT          ErrorCode = "E_UNKNOWN_OBJECT"
+	E_UNFINDABLE_OBJECT       ErrorCode = "E_UNFINDABLE_OBJECT"
+	E_INVALID_HANDSHAKE       ErrorCode = "E_INVALID_HANDSHAKE"
+	E_INVALID_TX_OUTPOINT     ErrorCode = "E_INVALID_TX_OUTPOINT"
+	E_INVALID_TX_SIGNATURE    ErrorCode = "E_INVALID_TX_SIGNATURE"
+	E_INVALID_TX_CONSERVATION ErrorCode = "E_INVALID_TX_CONSERVATION"
+	E_INVALID_BLOCK_COINBASE  ErrorCode = "E_INVALID_BLOCK_COINBASE"
+	E_INVALID_BLOCK_TIMESTAMP ErrorCode = "E_INVALID_BLOCK_TIMESTAMP"
+	E_INVALID_BLOCK_POW       ErrorCode = "E_INVALID_BLOCK_POW"
+	E_INVALID_GENESIS         ErrorCode = "E_INVALID_GENESIS"
 )
 
 type (
@@ -107,35 +109,35 @@ type (
 // -- message type getters --
 
 func (h *HelloSchema) MessageType() MessageType {
-	return HELLO
+	return MSG_HELLO
 }
 func (e *ErrorSchema) MessageType() MessageType {
-	return ERROR
+	return MSG_ERROR
 }
 func (g *GetPeersSchema) MessageType() MessageType {
-	return GETPEERS
+	return MSG_GETPEERS
 }
 func (p *PeersSchema) MessageType() MessageType {
-	return PEERS
+	return MSG_PEERS
 }
 func (g *GetObjectSchema) MessageType() MessageType {
-	return GETOBJECT
+	return MSG_GETOBJECT
 }
 func (i *IHaveObjectSchema) MessageType() MessageType {
-	return IHAVEOBJECT
+	return MSG_IHAVEOBJECT
 }
 func (o *ObjectSchema) MessageType() MessageType {
-	return OBJECT
+	return MSG_OBJECT
 }
 func (g *GetMempoolSchema) MessageType() MessageType {
-	return GETMEMPOOL
+	return MSG_GETMEMPOOL
 }
 func (m *MempoolSchema) MessageType() MessageType {
-	return MEMPOOL
+	return MSG_MEMPOOL
 }
 func (g *GetChainTipSchema) MessageType() MessageType {
-	return GETCHAINTIP
+	return MSG_GETCHAINTIP
 }
 func (c *ChainTipSchema) MessageType() MessageType {
-	return CHAINTIP
+	return MSG_CHAINTIP
 }

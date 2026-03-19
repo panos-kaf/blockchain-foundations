@@ -8,7 +8,7 @@ import (
 // SendMessage sends a message to the peer.
 // Not a top level function, intended to be paired with message constructors like messages.MakeHelloMessage().
 // If mkErr is not nil, it returns that error instead of sending the message.
-func (p *Peer) SendMessage(t messages.MessageType, msg string, mkerr error) error {
+func (p *Peer) SendMessage(t MessageType, code ErrorCode, msg string, mkerr error) error {
 	if mkerr != nil {
 		return fmt.Errorf("Failed to create %s message: %w", t, mkerr)
 	}
@@ -16,13 +16,13 @@ func (p *Peer) SendMessage(t messages.MessageType, msg string, mkerr error) erro
 	if err != nil {
 		return fmt.Errorf("Failed to send %s message: %w", t, err)
 	}
-	p.logMessage(t, true)
+	p.logMessage(t, code, sent)
 	return nil
 }
 
 // Broadcast sends a message to all connected peers.
 // Intended to be paired with message constructors like messages.MakeHelloMessage().
-func Broadcast(t messages.MessageType, msg string, mkErr error) {
+func Broadcast(t MessageType, code ErrorCode, msg string, mkErr error) {
 	if mkErr != nil {
 		globalError(fmt.Sprintf("Failed to create %s message: %v", t, mkErr))
 		return
@@ -31,7 +31,7 @@ func Broadcast(t messages.MessageType, msg string, mkErr error) {
 	defer connectedPeersMutex.Unlock()
 	var hasErrors bool
 	for _, peer := range connectedPeers {
-		if err := peer.SendMessage(t, msg, nil); err != nil {
+		if err := peer.SendMessage(t, code, msg, nil); err != nil {
 			peer.logErr("", fmt.Sprintf("Failed to broadcast %s message to %s: %v", t, peer.addr, err))
 			hasErrors = true
 		}
@@ -47,57 +47,57 @@ func Broadcast(t messages.MessageType, msg string, mkErr error) {
 
 func (p *Peer) SendHello() error {
 	msg, err := messages.MakeHelloMessage()
-	return p.SendMessage(messages.HELLO, msg, err)
+	return p.SendMessage(MSG_HELLO, E_NONE, msg, err)
 }
 
-func (p *Peer) SendError(name messages.ErrorCode, description string) error {
+func (p *Peer) SendError(name ErrorCode, description string) error {
 	msg, err := messages.MakeErrorMessage(name, description)
-	return p.SendMessage(messages.ERROR, msg, err)
+	return p.SendMessage(MSG_ERROR, name, msg, err)
 }
 
 func (p *Peer) SendGetPeers() error {
 	msg, err := messages.MakeGetPeersMessage()
-	return p.SendMessage(messages.GETPEERS, msg, err)
+	return p.SendMessage(MSG_GETPEERS, E_NONE, msg, err)
 }
 
 func (p *Peer) SendPeers(peers []string) error {
 	msg, err := messages.MakePeersMessage(peers)
-	return p.SendMessage(messages.PEERS, msg, err)
+	return p.SendMessage(MSG_PEERS, E_NONE, msg, err)
 }
 
 func (p *Peer) SendGetObject(objectID HashID) error {
 	msg, err := messages.MakeGetObjectMessage(objectID)
-	return p.SendMessage(messages.GETOBJECT, msg, err)
+	return p.SendMessage(MSG_GETOBJECT, E_NONE, msg, err)
 }
 
 func (p *Peer) SendIHaveObject(objectID HashID) error {
 	msg, err := messages.MakeIHaveObjectMessage(objectID)
-	return p.SendMessage(messages.IHAVEOBJECT, msg, err)
+	return p.SendMessage(MSG_IHAVEOBJECT, E_NONE, msg, err)
 }
 
 func (p *Peer) SendObject(obj messages.Object) error {
 	msg, err := messages.MakeObjectMessage(obj)
-	return p.SendMessage(messages.OBJECT, msg, err)
+	return p.SendMessage(MSG_OBJECT, E_NONE, msg, err)
 }
 
 func (p *Peer) SendGetMempool() error {
 	msg, err := messages.MakeGetMempoolMessage()
-	return p.SendMessage(messages.GETMEMPOOL, msg, err)
+	return p.SendMessage(MSG_GETMEMPOOL, E_NONE, msg, err)
 }
 
 func (p *Peer) SendMempool(txIDs []HashID) error {
 	msg, err := messages.MakeMempoolMessage(txIDs)
-	return p.SendMessage(messages.MEMPOOL, msg, err)
+	return p.SendMessage(MSG_MEMPOOL, E_NONE, msg, err)
 }
 
 func (p *Peer) SendGetChainTip() error {
 	msg, err := messages.MakeGetChainTipMessage()
-	return p.SendMessage(messages.GETCHAINTIP, msg, err)
+	return p.SendMessage(MSG_GETCHAINTIP, E_NONE, msg, err)
 }
 
 func (p *Peer) SendChainTip(chainTip HashID) error {
 	msg, err := messages.MakeChainTipMessage(chainTip)
-	return p.SendMessage(messages.CHAINTIP, msg, err)
+	return p.SendMessage(MSG_CHAINTIP, E_NONE, msg, err)
 }
 
 func (p *Peer) Greet() {
