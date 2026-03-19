@@ -68,6 +68,20 @@ func Message(mtype messages.MessageType, sends bool, id int, color string, addr 
 	log.Printf("%s%s[%d]%s[%s]%s%s[%s]%s", BOLD, color, id, msgcolor, mtype, direction, WHITE, addr, RESET)
 }
 
+func MessageError(mtype messages.MessageType, msg string, sends bool, id int, color string, addr string) {
+	var direction string
+	if sends {
+		direction = CYAN + "[-->]" + RESET
+	} else {
+		direction = YELLOW + "[<--]" + RESET
+	}
+	msgcolor := MessageTypeColor(mtype)
+
+	log.Printf("%s%s[%d]%s[%s]%s%s[%s] %sError: %s%s", BOLD, color, id, msgcolor, mtype, direction, WHITE, addr, RED, msg, RESET)
+}
+
+// Peer-specific log functions
+
 func ClientLog(mtype messages.MessageType, msg string, id int) {
 	Log(mtype, msg, id, BLUE)
 }
@@ -84,8 +98,16 @@ func ClientMessage(mtype messages.MessageType, sends bool, id int, addr string) 
 	Message(mtype, sends, id, BLUE, addr)
 }
 
+func ClientMessageError(mtype messages.MessageType, msg string, sends bool, id int, addr string) {
+	MessageError(mtype, msg, sends, id, BLUE, addr)
+}
+
 func ServerMessage(mtype messages.MessageType, sends bool, id int, addr string) {
 	Message(mtype, sends, id, MAGENTA, addr)
+}
+
+func ServerMessageError(mtype messages.MessageType, msg string, sends bool, id int, addr string) {
+	MessageError(mtype, msg, sends, id, MAGENTA, addr)
 }
 
 func ServerError(mtype messages.MessageType, msg string, id int) {
