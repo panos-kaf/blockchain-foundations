@@ -184,15 +184,6 @@ func (o *ObjectSchema) Validate() (error, ErrorCode) {
 		return fmt.Errorf("object could not get parsed"), INVALID_FORMAT
 	}
 
-	ID, err := HashObject(o.Object)
-	if err != nil {
-		return err, UNKNOWN_OBJECT
-	}
-
-	if ID != o.ObjectID {
-		return fmt.Errorf("object ID does not match hash of object content"), UNKNOWN_OBJECT
-	}
-
 	return o.Object.Validate()
 }
 

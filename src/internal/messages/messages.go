@@ -76,8 +76,7 @@ type (
 	}
 
 	ObjectSchema struct {
-		Type     MessageType `json:"type"`
-		ObjectID HashID      `json:"objectid"`
+		Type MessageType `json:"type"`
 
 		// The raw, unparsed JSON of the object.
 		RawObject json.RawMessage `json:"object"`
