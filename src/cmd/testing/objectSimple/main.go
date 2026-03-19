@@ -76,7 +76,7 @@ func main() {
 	val := 50000000000
 	// 1. Coinbase transaction
 	coinbaseTx := messages.CoinbaseTransaction{
-		Type:   messages.TRANSACTION,
+		Type:   messages.OBJ_TRANSACTION,
 		Height: &height,
 		Outputs: []messages.TxOutput{
 			{
@@ -107,7 +107,7 @@ func main() {
 	}
 
 	regularTx := messages.Transaction{
-		Type:    messages.TRANSACTION,
+		Type:    messages.OBJ_TRANSACTION,
 		Inputs:  []messages.TxInput{input},
 		Outputs: []messages.TxOutput{output},
 	}

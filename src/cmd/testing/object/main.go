@@ -116,7 +116,7 @@ func handshake(p *Peer) {
 }
 
 /* -------------------------
-   OBJECT EXCHANGE TESTS
+   MSG_OBJECT EXCHANGE TESTS
 --------------------------*/
 
 // 1a
@@ -295,7 +295,7 @@ func main() {
 	   Coinbase
 	--------------------------*/
 	h := 0
-	v := 50000000000
+	v := 50000000001
 
 	coinbase := messages.CoinbaseTransaction{
 		Type:   messages.TRANSACTION,
