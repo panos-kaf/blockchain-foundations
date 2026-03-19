@@ -1,6 +1,7 @@
 package peer
 
 import (
+	"marabu/internal/crypto"
 	"marabu/internal/messages"
 	"strconv"
 )
@@ -57,7 +58,7 @@ func (p *Peer) handleGetObject(msg *messages.GetObjectSchema) {
 			Err("Error retrieving object: " + err.Error())
 			return
 		}
-		err = p.SendObject(ID, obj)
+		err = p.SendObject(obj)
 		if err != nil {
 			Err("Error sending object: " + err.Error())
 		}
@@ -104,37 +105,42 @@ func (p *Peer) handleObject(msg *messages.ObjectSchema) {
 		p.logErr(messages.OBJECT, m)
 	}
 
-	errorCode, err := p.ValidateObject(msg.Object, msg.ObjectID)
+	errorCode, err := p.ValidateObject(msg.Object)
 	if err != nil {
 		Err("Received invalid object from peer " + p.addr + ": " + err.Error())
 		p.SendError(errorCode, "Invalid object: "+err.Error())
 		return
 	}
 
-	ID := msg.ObjectID
-	IDStr := string(ID)
+	ID, err := crypto.HashObject(msg.Object)
+	if err != nil {
+		Err("Error hashing object: " + err.Error())
+		return
+	}
 
-	Log("Received OBJECT with ID " + IDStr + " from peer: " + p.addr)
+	hashID := HashID(ID)
 
-	exists, err := p.objectManager.Exists(ID)
+	Log("Received OBJECT with ID " + ID + " from peer: " + p.addr)
+
+	exists, err := p.objectManager.Exists(hashID)
 	if err != nil {
 		Err("Error checking if object exists: " + err.Error())
 		return
 	}
 	if exists {
-		Log("We already have object " + IDStr + ", ignoring received object.")
+		Log("We already have object " + ID + ", ignoring received object.")
 	} else {
-		Log("Storing new object with ID " + IDStr)
+		Log("Storing new object with ID " + ID)
 
 		_, err := p.objectManager.Put(msg.Object)
 		if err != nil {
 			Err("Error storing object: " + err.Error())
 			return
 		}
-		Log("Object stored successfully with ID " + IDStr)
+		Log("Object stored successfully with ID " + ID)
 
 		// gossip!
-		advertisement, err := messages.MakeIHaveObjectMessage(ID)
+		advertisement, err := messages.MakeIHaveObjectMessage(hashID)
 		if err != nil {
 			Err("Error creating IHAVEOBJECT message: " + err.Error())
 			return
