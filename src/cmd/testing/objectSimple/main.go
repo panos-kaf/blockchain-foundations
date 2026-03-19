@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"marabu/internal/crypto"
 	"marabu/internal/messages"
 	"net"
 	"os"
@@ -70,19 +71,23 @@ func main() {
 	fmt.Println("Received:", resp)
 	// Parse and check for getpeers response
 
+	height := 0
+
+	val := 50000000000
 	// 1. Coinbase transaction
 	coinbaseTx := messages.CoinbaseTransaction{
 		Type:   messages.TRANSACTION,
-		Height: 0,
+		Height: &height,
 		Outputs: []messages.TxOutput{
 			{
 				Pubkey: "958f8add086cc348e229a3b6590c71b7d7754e42134a127a50648bf07969d9a0",
-				Value:  50000000000,
+				Value:  &val,
 			},
 		},
 	}
-	coinbaseID, _ := messages.HashObject(coinbaseTx)
-	coinbaseMsg, _ := messages.MakeCBTXObjectMessage(coinbaseTx)
+	coinbaseIDstr, _ := crypto.HashObject(coinbaseTx)
+	coinbaseID := messages.HashID(coinbaseIDstr)
+	coinbaseMsg, _ := messages.MakeObjectMessage(coinbaseTx)
 	fmt.Println("\n--- Coinbase Transaction Exchange ---")
 	fmt.Printf("Coinbase object message:\n%s\n\n", coinbaseMsg)
 	exchangeObject(coinbaseID, coinbaseMsg, conn, resp)
@@ -95,9 +100,10 @@ func main() {
 		Sig:      &sig,
 	}
 
+	val2 := 10
 	output := messages.TxOutput{
 		Pubkey: "958f8add086cc348e229a3b6590c71b7d7754e42134a127a50648bf07969d9a0",
-		Value:  10,
+		Value:  &val2,
 	}
 
 	regularTx := messages.Transaction{
@@ -106,8 +112,9 @@ func main() {
 		Outputs: []messages.TxOutput{output},
 	}
 
-	regularID, _ := messages.HashObject(regularTx)
-	regularMsg, _ := messages.MakeTXObjectMessage(regularTx)
+	regularIDstr, _ := crypto.HashObject(regularTx)
+	regularID := messages.HashID(regularIDstr)
+	regularMsg, _ := messages.MakeObjectMessage(regularTx)
 	fmt.Println("\n--- Regular Transaction Exchange ---")
 	fmt.Printf("Regular object message:\n%s\n\n", regularMsg)
 	exchangeObject(regularID, regularMsg, conn, resp)

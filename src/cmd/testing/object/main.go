@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"marabu/internal/crypto"
 	"marabu/internal/messages"
 	"net"
 	"strings"
@@ -172,20 +173,32 @@ func testUnknownObject(p *Peer) {
 		Inputs: []messages.TxInput{
 			{
 				Outpoint: messages.Outpoint{
-					Txid:  messages.HashID("abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef"),
+					Txid:  messages.HashID("abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd"),
 					Index: 0,
 				},
 			},
 		},
 	}
 
-	p.send(must(messages.MakeTXObjectMessage(tx)))
+	p.send(must(messages.MakeObjectMessage(tx)))
 	expectError(p, "UNKNOWN_OBJECT")
 }
+
+// {"object":{
+// 	"height":0,
+// 	"outputs":[
+// 		{"pubkey":"39cd95f5cac18db4ca13e9a47b507811da4a6a158ba4a2f89e183e5123c52ae4",
+// 		"value":50000000000}
+// 		],
+// 	"type":"transaction"
+// 	},
+// "type":"object"}
 
 // 2a(ii)
 func testInvalidSignature(p *Peer, coinbaseID messages.HashID) {
 	fmt.Println("\n[Test 2a(ii)] INVALID_TX_SIGNATURE")
+
+	v := 10
 
 	tx := messages.Transaction{
 		Type: messages.TRANSACTION,
@@ -196,17 +209,19 @@ func testInvalidSignature(p *Peer, coinbaseID messages.HashID) {
 			},
 		},
 		Outputs: []messages.TxOutput{
-			{Pubkey: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890", Value: 10},
+			{Pubkey: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890", Value: &v},
 		},
 	}
 
-	p.send(must(messages.MakeTXObjectMessage(tx)))
+	p.send(must(messages.MakeObjectMessage(tx)))
 	expectError(p, "INVALID_TX_SIGNATURE")
 }
 
 // 2a(iii)
 func testInvalidOutpoint(p *Peer, coinbaseID messages.HashID) {
 	fmt.Println("\n[Test 2a(iii)] INVALID_TX_OUTPOINT")
+
+	v := 10
 
 	tx := messages.Transaction{
 		Type: messages.TRANSACTION,
@@ -216,17 +231,19 @@ func testInvalidOutpoint(p *Peer, coinbaseID messages.HashID) {
 			},
 		},
 		Outputs: []messages.TxOutput{
-			{Pubkey: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890", Value: 10},
+			{Pubkey: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890", Value: &v},
 		},
 	}
 
-	p.send(must(messages.MakeTXObjectMessage(tx)))
+	p.send(must(messages.MakeObjectMessage(tx)))
 	expectError(p, "INVALID_TX_OUTPOINT")
 }
 
 // 2a(iv)
 func testConservation(p *Peer, coinbaseID messages.HashID, sig messages.Signature) {
 	fmt.Println("\n[Test 2a(iv)] INVALID_TX_CONSERVATION")
+
+	v := 999999999
 
 	tx := messages.Transaction{
 		Type: messages.TRANSACTION,
@@ -237,11 +254,11 @@ func testConservation(p *Peer, coinbaseID messages.HashID, sig messages.Signatur
 			},
 		},
 		Outputs: []messages.TxOutput{
-			{Pubkey: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890", Value: 999999999},
+			{Pubkey: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890", Value: &v},
 		},
 	}
 
-	p.send(must(messages.MakeTXObjectMessage(tx)))
+	p.send(must(messages.MakeObjectMessage(tx)))
 	expectError(p, "INVALID_TX_CONSERVATION")
 }
 
@@ -277,16 +294,20 @@ func main() {
 	/* -------------------------
 	   Coinbase
 	--------------------------*/
+	h := 0
+	v := 50000000000
+
 	coinbase := messages.CoinbaseTransaction{
 		Type:   messages.TRANSACTION,
-		Height: 0,
+		Height: &h,
 		Outputs: []messages.TxOutput{
-			{Pubkey: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890", Value: 50},
+			{Pubkey: "39cd95f5cac18db4ca13e9a47b507811da4a6a158ba4a2f89e183e5123c52ae4", Value: &v},
 		},
 	}
 
-	coinbaseID, _ := messages.HashObject(coinbase)
-	coinbaseMsg := must(messages.MakeCBTXObjectMessage(coinbase))
+	coinbaseIDstr, _ := crypto.HashObject(coinbase)
+	coinbaseID := messages.HashID(coinbaseIDstr)
+	coinbaseMsg := must(messages.MakeObjectMessage(coinbase))
 
 	p1.send(coinbaseMsg)
 
@@ -303,7 +324,7 @@ func main() {
 	/* -------------------------
 	   Validation
 	--------------------------*/
-	sig := messages.Signature("abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef")
+	sig := messages.Signature("1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef")
 
 	testUnknownObject(p1)
 	testInvalidSignature(p1, coinbaseID)
