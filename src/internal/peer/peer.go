@@ -85,7 +85,7 @@ func (p *Peer) initializeSocket() {
 			connectedPeersMutex.Unlock()
 
 			if err != io.EOF {
-				p.logErr("", "Disconnected: "+err.Error())
+				p.logErr(MSG_NONE, "Disconnected: "+err.Error())
 				return
 			}
 			if p.onDisconnect != nil {
@@ -103,7 +103,7 @@ func (p *Peer) initializeSocket() {
 func (p *Peer) handleMessage(raw string) {
 
 	if len(strings.TrimSpace(raw)) == 0 {
-		p.log("", "Received empty message")
+		p.log(MSG_NONE, "Received empty message")
 		return
 	}
 
@@ -112,7 +112,7 @@ func (p *Peer) handleMessage(raw string) {
 	msg, err, code := messages.UnmarshalMessage(raw)
 
 	if err != nil {
-		p.logErr("", "Invalid message: "+err.Error())
+		p.logErr(MSG_NONE, "Invalid message: "+err.Error())
 		p.SendError(code, "Could not parse message as JSON: "+err.Error())
 		if !p.handshakeComplete {
 			p.conn.Close()
@@ -164,7 +164,7 @@ func (p *Peer) handleMessage(raw string) {
 	case *ChainTipSchema:
 		p.handleChainTip(m)
 	default:
-		p.logErr("", "Unknown message type")
+		p.logErr(MSG_NONE, "Unknown message type")
 		p.SendError(messages.E_INVALID_FORMAT, "Unknown protocol message")
 		p.conn.Close()
 	}
@@ -245,7 +245,7 @@ func StartServer(port int, objectManager *object.ObjectManager) error {
 		p.onLogMessageError = func(mtype MessageType, code ErrorCode, msg string, sends bool) {
 			logs.ServerMessageError(mtype, code, msg, sends, p.ID, p.addr)
 		}
-		p.onDisconnect = func() { logs.ServerLog("", fmt.Sprintf("Client at %s disconnected", p.addr), p.ID) }
+		p.onDisconnect = func() { logs.ServerLog(MSG_NONE, fmt.Sprintf("Client at %s disconnected", p.addr), p.ID) }
 
 		p.onLog(messages.MSG_HELLO, fmt.Sprintf("Accepted connection from %s", addr))
 
@@ -274,9 +274,9 @@ func StartClient(host string, port int, objectManager *object.ObjectManager, onC
 	p.onLogMessageError = func(mtype MessageType, code ErrorCode, msg string, sends bool) {
 		logs.ClientMessageError(mtype, code, msg, sends, p.ID, p.addr)
 	}
-	p.onDisconnect = func() { logs.ClientLog("", fmt.Sprintf("Disconnected from server at %s", p.addr), p.ID) }
+	p.onDisconnect = func() { logs.ClientLog(MSG_NONE, fmt.Sprintf("Disconnected from server at %s", p.addr), p.ID) }
 
-	p.onLog("", fmt.Sprintf("Connected to server at %s:%d", host, port))
+	p.onLog(MSG_NONE, fmt.Sprintf("Connected to server at %s:%d", host, port))
 
 	p.Greet()
 
