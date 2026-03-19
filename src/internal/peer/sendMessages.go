@@ -75,36 +75,8 @@ func (p *Peer) SendIHaveObject(objectID HashID) error {
 	return p.SendMessage(messages.IHAVEOBJECT, msg, err)
 }
 
-func (p *Peer) SendTransaction(tx messages.Transaction) error {
-	msg, err := messages.MakeTXObjectMessage(tx)
-	return p.SendMessage(messages.OBJECT, msg, err)
-}
-
-func (p *Peer) SendCoinbaseTransaction(cbtx messages.CoinbaseTransaction) error {
-	msg, err := messages.MakeCBTXObjectMessage(cbtx)
-	return p.SendMessage(messages.OBJECT, msg, err)
-}
-
-func (p *Peer) SendBlock(b messages.Block) error {
-	msg, err := messages.MakeBlockObjectMessage(b)
-	return p.SendMessage(messages.OBJECT, msg, err)
-}
-
-func (p *Peer) SendObject(objectID HashID, obj messages.Object) error {
-
-	var msg string
-	var err error
-
-	switch o := obj.(type) {
-	case *messages.Transaction:
-		msg, err = messages.MakeTXObjectMessage(*o)
-	case *messages.CoinbaseTransaction:
-		msg, err = messages.MakeCBTXObjectMessage(*o)
-	case *messages.Block:
-		msg, err = messages.MakeBlockObjectMessage(*o)
-	default:
-		return fmt.Errorf("Unknown object type for ID %s: %T", objectID, obj)
-	}
+func (p *Peer) SendObject(obj messages.Object) error {
+	msg, err := messages.MakeObjectMessage(obj)
 	return p.SendMessage(messages.OBJECT, msg, err)
 }
 

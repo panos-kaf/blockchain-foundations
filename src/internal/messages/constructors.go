@@ -3,7 +3,6 @@ package messages
 import (
 	"encoding/json"
 	"fmt"
-	"marabu/internal/crypto"
 )
 
 // wraps the canonicalization process for message constructors
@@ -65,49 +64,14 @@ func MakeIHaveObjectMessage(objectID HashID) (string, error) {
 	})
 }
 
-func MakeTXObjectMessage(tx Transaction) (string, error) {
-	raw, err := Canonicalize(tx)
+func MakeObjectMessage(obj Object) (string, error) {
+	raw, err := Canonicalize(obj)
 	if err != nil {
 		return "", err
 	}
-	objectID, err := HashObject(tx)
-	if err != nil {
-		return "", err
-	}
-	return MakeObjectMessage(HashID(objectID), json.RawMessage(raw))
-}
-
-func MakeCBTXObjectMessage(cbtx CoinbaseTransaction) (string, error) {
-	raw, err := Canonicalize(cbtx)
-	if err != nil {
-		return "", err
-	}
-	objectID, err := crypto.HashString(raw)
-	if err != nil {
-		return "", err
-	}
-
-	return MakeObjectMessage(HashID(objectID), json.RawMessage(raw))
-}
-
-func MakeBlockObjectMessage(block Block) (string, error) {
-	raw, err := Canonicalize(block)
-	if err != nil {
-		return "", err
-	}
-	objectID, err := crypto.HashString(raw)
-	if err != nil {
-		return "", err
-	}
-
-	return MakeObjectMessage(HashID(objectID), json.RawMessage(raw))
-}
-
-func MakeObjectMessage(objectID HashID, rawObject json.RawMessage) (string, error) {
 	return CanonicalizeMessage(ObjectSchema{
 		Type:      OBJECT,
-		ObjectID:  objectID,
-		RawObject: rawObject,
+		RawObject: json.RawMessage(raw),
 	})
 }
 
