@@ -24,6 +24,9 @@ test-obj:
 test-obj-simple:
 	make -C $(SRC) test-obj-simple
 
+test-pset2:
+	make -C $(SRC) test-pset2
+
 run:
 	make -C $(SRC) run
 
