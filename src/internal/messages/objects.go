@@ -2,7 +2,6 @@ package messages
 
 import (
 	"fmt"
-	"marabu/internal/crypto"
 )
 
 // -- Object sub-type definitions --
@@ -21,7 +20,7 @@ type TxInput struct {
 
 type TxOutput struct {
 	Pubkey HashID `json:"pubkey"`
-	Value  int    `json:"value"`
+	Value  *int   `json:"value"`
 }
 
 type ObjectType string
@@ -39,7 +38,7 @@ type Transaction struct {
 
 type CoinbaseTransaction struct {
 	Type    ObjectType `json:"type"`
-	Height  int        `json:"height"`
+	Height  *int       `json:"height"`
 	Outputs []TxOutput `json:"outputs"`
 }
 
@@ -90,13 +89,18 @@ func (t Transaction) Validate() (error, ErrorCode) {
 			return err, code
 		}
 	}
+	for i, output := range t.Outputs {
+		if output.Value == nil {
+			return fmt.Errorf("missing value for output %d", i), INVALID_FORMAT
+		}
+	}
 
 	arrLength = len(t.Outputs)
 	if arrLength > 1000 {
 		return fmt.Errorf("transaction exceeds maximum number of outputs (1000), got %d", arrLength), INVALID_FORMAT
 	}
 	for i, output := range t.Outputs {
-		if err, code := ValidateNonNegativeInt(output.Value, fmt.Sprintf("outputs[%d].value", i)); err != nil {
+		if err, code := ValidateNonNegativeInt(*output.Value, fmt.Sprintf("outputs[%d].value", i)); err != nil {
 			return err, code
 		}
 	}
@@ -104,6 +108,20 @@ func (t Transaction) Validate() (error, ErrorCode) {
 }
 
 func (c CoinbaseTransaction) Validate() (error, ErrorCode) {
+
+	if err, code := ValidateObjectType(c.Type); err != nil {
+		return err, code
+	}
+
+	if c.Height == nil {
+		return fmt.Errorf("missing height for coinbase transaction"), INVALID_FORMAT
+	}
+
+	for i, output := range c.Outputs {
+		if output.Value == nil {
+			return fmt.Errorf("missing value for output %d", i), INVALID_FORMAT
+		}
+	}
 	return nil, ""
 }
 
@@ -126,7 +144,7 @@ func makeTxInput(txid HashID, index int, sig Signature) TxInput {
 func makeTxOutput(pubkey HashID, value int) TxOutput {
 	return TxOutput{
 		Pubkey: pubkey,
-		Value:  value,
+		Value:  &value,
 	}
 }
 
@@ -141,7 +159,7 @@ func makeTransaction(inputs []TxInput, outputs []TxOutput) Transaction {
 func makeCoinbaseTransaction(height int, outputs []TxOutput) CoinbaseTransaction {
 	return CoinbaseTransaction{
 		Type:    TRANSACTION,
-		Height:  height,
+		Height:  &height,
 		Outputs: outputs,
 	}
 }
@@ -158,16 +176,4 @@ func makeBlock(T HashID, created int, miner *string, nonce HashID, note *string,
 		Studentids: studentids,
 		Txids:      txids,
 	}
-}
-
-func HashObject(obj Object) (HashID, error) {
-	raw, err := Canonicalize(obj)
-	if err != nil {
-		return "", err
-	}
-	hash, err := crypto.HashString(raw)
-	if err != nil {
-		return "", err
-	}
-	return HashID(hash), nil
 }
