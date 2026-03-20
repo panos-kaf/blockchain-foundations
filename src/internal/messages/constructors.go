@@ -8,8 +8,8 @@ import (
 
 func MakeHelloMessage() (string, error) {
 
-	version := "0.10.0"
-	agent := "marabobos"
+	version := Version("0.10.0")
+	agent := BuString("marabobos")
 
 	return CanonicalizeMessage(&HelloSchema{
 		Type:    MSG_HELLO,
@@ -18,7 +18,7 @@ func MakeHelloMessage() (string, error) {
 	})
 }
 
-func MakeErrorMessage(name ErrorCode, description string) (string, error) {
+func MakeErrorMessage(name ErrorCode, description BuString) (string, error) {
 	return CanonicalizeMessage(&ErrorSchema{
 		Type:        MSG_ERROR,
 		Name:        name,
@@ -32,7 +32,7 @@ func MakeGetPeersMessage() (string, error) {
 	})
 }
 
-func MakePeersMessage(peers []string) (string, error) {
+func MakePeersMessage(peers []Peer) (string, error) {
 	return CanonicalizeMessage(&PeersSchema{
 		Type:  MSG_PEERS,
 		Peers: peers,

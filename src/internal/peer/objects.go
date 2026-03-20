@@ -44,7 +44,8 @@ func (p *Peer) ValidateTransaction(tx *Transaction) (int, ErrorCode, error) {
 		return 0, messages.E_INTERNAL_ERROR, fmt.Errorf("Invalid object type for transaction: %s", tx.Type)
 	}
 
-	sumInputs, sumOutputs := 0, 0
+	sumInputs := BuInt(0)
+	sumOutputs := BuInt(0)
 
 	// 1. Create a quick struct to hold the data we need for crypto later
 	type sigData struct {
@@ -77,7 +78,7 @@ func (p *Peer) ValidateTransaction(tx *Transaction) (int, ErrorCode, error) {
 			return 0, messages.E_INTERNAL_ERROR, fmt.Errorf("Referenced object is of unknown type")
 		}
 
-		if outpoint.Index < 0 || outpoint.Index >= len(outputs) {
+		if outpoint.Index < 0 || int(outpoint.Index) >= len(outputs) {
 			return 0, messages.E_INVALID_TX_OUTPOINT, fmt.Errorf("Invalid output index")
 		}
 
@@ -113,7 +114,7 @@ func (p *Peer) ValidateTransaction(tx *Transaction) (int, ErrorCode, error) {
 		}
 	}
 
-	fee := sumInputs - sumOutputs
+	fee := int(sumInputs - sumOutputs)
 	return fee, E_NONE, nil
 }
 

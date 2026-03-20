@@ -4,6 +4,7 @@ package bootstrap
 
 import (
 	"fmt"
+	"marabu/internal/messages"
 	"marabu/internal/object"
 	"marabu/internal/peer"
 	"net"
@@ -15,8 +16,8 @@ func StartNode(objectManager *object.ObjectManager) {
 	go peer.StartServer(18018, objectManager)
 
 	for _, p := range peer.BOOTSTRAP_PEERS {
-		go func(p string) {
-			host, portStr, _ := net.SplitHostPort(p)
+		go func(p messages.Peer) {
+			host, portStr, _ := net.SplitHostPort(string(p))
 			port, _ := strconv.Atoi(portStr)
 			err := peer.StartClient(host, port, objectManager, func() {
 				// Handle client disconnect if needed

@@ -12,8 +12,17 @@ type (
 
 	MessageType string
 	ErrorCode   string
+	Version     string
+	Peer        string
+	Peers       []Peer
 	HashID      string // 32byte (64-character) hex string
+	HashIDs     []HashID
 	Signature   string // 64byte (128-character) hex string
+
+	BuInt     int
+	BuString  string
+	BuInts    []BuInt
+	BuStrings []BuString
 )
 
 const (
@@ -48,14 +57,14 @@ const (
 type (
 	HelloSchema struct {
 		Type    MessageType `json:"type"`
-		Version string      `json:"version"`
-		Agent   *string     `json:"agent,omitempty"`
+		Version Version     `json:"version"`
+		Agent   *BuString   `json:"agent,omitempty"`
 	}
 
 	ErrorSchema struct {
 		Type        MessageType `json:"type"`
 		Name        ErrorCode   `json:"name"`
-		Description string      `json:"description"`
+		Description BuString    `json:"description"`
 	}
 
 	GetPeersSchema struct {
@@ -64,7 +73,7 @@ type (
 
 	PeersSchema struct {
 		Type  MessageType `json:"type"`
-		Peers []string    `json:"peers"`
+		Peers Peers       `json:"peers"`
 	}
 
 	GetObjectSchema struct {
@@ -93,7 +102,7 @@ type (
 
 	MempoolSchema struct {
 		Type  MessageType `json:"type"`
-		Txids []HashID    `json:"txids"`
+		Txids HashIDs     `json:"txids"`
 	}
 
 	GetChainTipSchema struct {

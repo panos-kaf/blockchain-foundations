@@ -8,19 +8,19 @@ import (
 
 func (p *Peer) handleHello(msg *HelloSchema) {
 	if msg.Agent != nil {
-		p.log(msg.Type, *msg.Agent+" ("+p.addr+") says hello, version: "+msg.Version)
+		p.log(msg.Type, string(*msg.Agent)+" ("+p.addr+") says hello, version: "+string(msg.Version))
 	} else {
-		p.log(msg.Type, "Peer "+p.addr+" says hello, version: "+msg.Version)
+		p.log(msg.Type, "Peer "+p.addr+" says hello, version: "+string(msg.Version))
 	}
 	p.handshakeComplete = true
 }
 
 func (p *Peer) handleError(msg *ErrorSchema) {
-	p.log(msg.Type, string(msg.Name)+", peer: "+p.addr+", description: "+msg.Description+")")
+	p.log(msg.Type, string(msg.Name)+", peer: "+p.addr+", description: "+string(msg.Description)+")")
 }
 
 func (p *Peer) handleGetPeers() {
-	peers := make([]string, 0, len(knownPeers))
+	peers := make(Peers, 0, len(knownPeers))
 	for peer := range knownPeers {
 		peers = append(peers, peer)
 	}

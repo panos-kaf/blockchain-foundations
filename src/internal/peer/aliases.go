@@ -42,9 +42,21 @@ var (
 )
 
 type (
-	Message     = messages.Message
+	Message = messages.Message
+
 	MessageType = messages.MessageType
 	ErrorCode   = messages.ErrorCode
+	Version     = messages.Version
+	BuPeer      = messages.Peer
+	Peers       = messages.Peers
+	HashID      = messages.HashID
+	HashIDs     = messages.HashIDs
+	Signature   = messages.Signature
+
+	BuInt     = messages.BuInt
+	BuString  = messages.BuString
+	BuInts    = messages.BuInts
+	BuStrings = messages.BuStrings
 
 	HelloSchema       = messages.HelloSchema
 	ErrorSchema       = messages.ErrorSchema
@@ -66,7 +78,4 @@ type (
 	TxOutput = messages.TxOutput
 	TxInput  = messages.TxInput
 	Outpoint = messages.Outpoint
-
-	HashID    = messages.HashID
-	Signature = messages.Signature
 )

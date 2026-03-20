@@ -4,7 +4,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"regexp"
 )
+
+// Reusable compiled regexes for performance
+var (
+	versionRegex = regexp.MustCompile(`^0\.10\.[0-9]+$`)
+	peerRegex    = regexp.MustCompile(`^((?:\d{1,3}\.){3}\d{1,3}|\[[a-fA-F0-9:]+\]|[a-fA-F0-9:]+|[a-zA-Z0-9.-]+):[0-9]{1,5}$`)
+)
+
+const maxArrLen = 1000
+
+func ValidateVersionString(val string) (error, ErrorCode) {
+
+	return nil, E_NONE
+}
 
 var messageTypeRegistry = map[string]reflect.Type{
 	string(MSG_HELLO):       reflect.TypeOf(HelloSchema{}),
@@ -62,19 +76,16 @@ func (mt *MessageType) UnmarshalJSON(data []byte) error {
 	}
 }
 
-// Custom UnmarshalJSON for ObjectType to enforce valid object types
-func (ot *ObjectType) UnmarshalJSON(data []byte) error {
+func (v *Version) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
-		return err
+		return fmt.Errorf("invalid version format: %w", err)
 	}
-	switch ObjectType(s) {
-	case OBJ_BLOCK, OBJ_TRANSACTION:
-		*ot = ObjectType(s)
-		return nil
-	default:
-		return fmt.Errorf("invalid object type: '%s'", s)
+	if !versionRegex.MatchString(s) {
+		return fmt.Errorf("invalid version format: %s", s)
 	}
+	*v = Version(s)
+	return nil
 }
 
 // Custom UnmarshalJSON for ErrorCode to enforce valid error codes
@@ -90,6 +101,33 @@ func (ec *ErrorCode) UnmarshalJSON(data []byte) error {
 	default:
 		return fmt.Errorf("invalid error code: '%s'", s)
 	}
+}
+
+// Custom UnmarshalJSON for ObjectType to enforce valid object types
+func (ot *ObjectType) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	switch ObjectType(s) {
+	case OBJ_BLOCK, OBJ_TRANSACTION:
+		*ot = ObjectType(s)
+		return nil
+	default:
+		return fmt.Errorf("invalid object type: '%s'", s)
+	}
+}
+
+func (p *Peer) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return fmt.Errorf("invalid peer format: %w", err)
+	}
+	if !peerRegex.MatchString(s) {
+		return fmt.Errorf("invalid peer format: %s", s)
+	}
+	*p = Peer(s)
+	return nil
 }
 
 // Custom UnmarshalJSON for Hash IDs to enforce length and hex format
@@ -194,4 +232,58 @@ func (o *ObjectSchema) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf("unknown object type: %s", typeProbe.Type)
 	}
 	return nil
+}
+
+func (n *BuInt) UnmarshalJSON(data []byte) error {
+	var i int
+	if err := json.Unmarshal(data, &i); err != nil {
+		return fmt.Errorf("invalid integer format: %w", err)
+	}
+
+	if i < 0 {
+		return fmt.Errorf("integer value must be non-negative, got %d", i)
+	}
+
+	*n = BuInt(i)
+	return nil
+}
+
+func (s *BuString) UnmarshalJSON(data []byte) error {
+	var str string
+
+	if err := json.Unmarshal(data, &str); err != nil {
+		return fmt.Errorf("invalid string format: %w", err)
+	}
+
+	if len(str) > maxArrLen {
+		return fmt.Errorf("string exceeds maximum length of %d characters, got %d", maxArrLen, len(str))
+	}
+	*s = BuString(str)
+	return nil
+}
+
+// Generic helper for unmarshaling arrays with length checks
+func UnmarshalArray[T any](data []byte, target *[]T, maxLen int, fieldName string) error {
+	var arr []T
+	if err := json.Unmarshal(data, &arr); err != nil {
+		return fmt.Errorf("invalid %s array format: %w", fieldName, err)
+	}
+	if len(arr) > maxLen {
+		return fmt.Errorf("%s array exceeds maximum length of %d elements, got %d", fieldName, maxLen, len(arr))
+	}
+	*target = arr
+	return nil
+}
+
+func (arr *BuInts) UnmarshalJSON(data []byte) error {
+	return UnmarshalArray(data, (*[]BuInt)(arr), maxArrLen, "BuInts")
+}
+func (arr *BuStrings) UnmarshalJSON(data []byte) error {
+	return UnmarshalArray(data, (*[]BuString)(arr), maxArrLen, "BuStrings")
+}
+func (arr *HashIDs) UnmarshalJSON(data []byte) error {
+	return UnmarshalArray(data, (*[]HashID)(arr), maxArrLen, "HashIDs")
+}
+func (arr *Peers) UnmarshalJSON(data []byte) error {
+	return UnmarshalArray(data, (*[]Peer)(arr), maxArrLen, "Peers")
 }

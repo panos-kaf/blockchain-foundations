@@ -6,24 +6,26 @@ import (
 
 // -- Object sub-type definitions --
 
-type Outpoint struct {
-	Txid  HashID `json:"txid"`
-	Index int    `json:"index"`
-}
+type (
+	Outpoint struct {
+		Txid  HashID `json:"txid"`
+		Index BuInt  `json:"index"`
+	}
 
-type TxInput struct {
-	Outpoint Outpoint `json:"outpoint"`
+	TxInput struct {
+		Outpoint Outpoint `json:"outpoint"`
 
-	// 64byte (128-character) hexadecimal string, handle as simple string for now...
-	Sig *Signature `json:"sig"`
-}
+		// 64byte (128-character) hexadecimal string, handle as simple string for now...
+		Sig *Signature `json:"sig"`
+	}
 
-type TxOutput struct {
-	Pubkey HashID `json:"pubkey"`
-	Value  *int   `json:"value"`
-}
+	TxOutput struct {
+		Pubkey HashID `json:"pubkey"`
+		Value  *BuInt `json:"value"`
+	}
 
-type ObjectType string
+	ObjectType string
+)
 
 const (
 	OBJ_BLOCK       ObjectType = "block"
@@ -38,20 +40,20 @@ type Transaction struct {
 
 type CoinbaseTransaction struct {
 	Type    ObjectType `json:"type"`
-	Height  *int       `json:"height"`
+	Height  *BuInt     `json:"height"`
 	Outputs []TxOutput `json:"outputs"`
 }
 
 type Block struct {
 	Type       ObjectType `json:"type"`
 	T          HashID     `json:"T"`
-	Created    int        `json:"created"`
-	Miner      *string    `json:"miner,omitempty"`
+	Created    BuInt      `json:"created"`
+	Miner      *BuString  `json:"miner,omitempty"`
 	Nonce      HashID     `json:"nonce"`
-	Note       *string    `json:"note,omitempty"`
+	Note       *BuString  `json:"note,omitempty"`
 	Previd     *HashID    `json:"previd"` //nullable
-	Studentids *[]string  `json:"studentids,omitempty"`
-	Txids      []string   `json:"txids"`
+	Studentids *BuStrings `json:"studentids,omitempty"`
+	Txids      HashIDs    `json:"txids"`
 }
 
 // An object is either a Tx, a coinbase Tx, or a block
@@ -81,11 +83,7 @@ func (t Transaction) Validate() (error, ErrorCode) {
 	if arrLength > 1000 {
 		return fmt.Errorf("transaction exceeds maximum number of inputs (1000), got %d", arrLength), E_INVALID_FORMAT
 	}
-	for i, input := range t.Inputs {
-		if err, code := ValidateNonNegativeInt(input.Outpoint.Index, fmt.Sprintf("inputs[%d].outpoint.index", i)); err != nil {
-			return err, code
-		}
-	}
+
 	for i, output := range t.Outputs {
 		if output.Value == nil {
 			return fmt.Errorf("missing value for output %d", i), E_INVALID_FORMAT
@@ -96,11 +94,7 @@ func (t Transaction) Validate() (error, ErrorCode) {
 	if arrLength > 1000 {
 		return fmt.Errorf("transaction exceeds maximum number of outputs (1000), got %d", arrLength), E_INVALID_FORMAT
 	}
-	for i, output := range t.Outputs {
-		if err, code := ValidateNonNegativeInt(*output.Value, fmt.Sprintf("outputs[%d].value", i)); err != nil {
-			return err, code
-		}
-	}
+
 	return nil, E_NONE
 }
 
@@ -124,7 +118,7 @@ func (b Block) Validate() (error, ErrorCode) {
 
 // -- object constructors --
 
-func makeTxInput(txid HashID, index int, sig Signature) TxInput {
+func makeTxInput(txid HashID, index BuInt, sig Signature) TxInput {
 	return TxInput{
 		Outpoint: Outpoint{
 			Txid:  txid,
@@ -134,7 +128,7 @@ func makeTxInput(txid HashID, index int, sig Signature) TxInput {
 	}
 }
 
-func makeTxOutput(pubkey HashID, value int) TxOutput {
+func makeTxOutput(pubkey HashID, value BuInt) TxOutput {
 	return TxOutput{
 		Pubkey: pubkey,
 		Value:  &value,
@@ -149,7 +143,7 @@ func makeTransaction(inputs []TxInput, outputs []TxOutput) Transaction {
 	}
 }
 
-func makeCoinbaseTransaction(height int, outputs []TxOutput) CoinbaseTransaction {
+func makeCoinbaseTransaction(height BuInt, outputs []TxOutput) CoinbaseTransaction {
 	return CoinbaseTransaction{
 		Type:    OBJ_TRANSACTION,
 		Height:  &height,
@@ -157,7 +151,7 @@ func makeCoinbaseTransaction(height int, outputs []TxOutput) CoinbaseTransaction
 	}
 }
 
-func makeBlock(T HashID, created int, miner *string, nonce HashID, note *string, previd *HashID, studentids *[]string, txids []string) Block {
+func makeBlock(T HashID, created BuInt, miner *BuString, nonce HashID, note *BuString, previd *HashID, studentids *BuStrings, txids []HashID) Block {
 	return Block{
 		Type:       OBJ_BLOCK,
 		T:          T,

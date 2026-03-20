@@ -16,13 +16,13 @@ import (
 )
 
 var (
-	BOOTSTRAP_PEERS = []string{
+	BOOTSTRAP_PEERS = Peers{
 		"95.179.158.137:18018",
 		"95.179.132.22:18018",
 		"45.32.235.245:18018",
 	}
 	PEERS_FILE      = filepath.Join(".", "db", "peers.csv")
-	knownPeers      = make(map[string]string)
+	knownPeers      = make(map[BuPeer]string)
 	knownPeersMutex sync.Mutex
 )
 
@@ -54,7 +54,7 @@ func loadPeers() {
 		if len(rec) < 2 || rec[0] == "Address" {
 			continue
 		}
-		knownPeers[rec[0]] = rec[1]
+		knownPeers[BuPeer(rec[0])] = rec[1]
 	}
 }
 
@@ -72,15 +72,15 @@ func savePeers() {
 	defer w.Flush()
 	w.Write([]string{"Address", "Source"})
 	for peer, source := range knownPeers {
-		w.Write([]string{peer, source})
+		w.Write([]string{string(peer), string(source)})
 	}
 }
 
 // Get all known peers
-func GetKnownPeers() []string {
+func GetKnownPeers() Peers {
 	knownPeersMutex.Lock()
 	defer knownPeersMutex.Unlock()
-	keys := make([]string, 0, len(knownPeers))
+	keys := make(Peers, 0, len(knownPeers))
 	for k := range knownPeers {
 		keys = append(keys, k)
 	}
@@ -88,30 +88,31 @@ func GetKnownPeers() []string {
 }
 
 // Validate and sanitize peer address
-func sanitizePeer(peer string) (string, bool) {
-	peer = strings.TrimSpace(peer)
+func sanitizePeer(peer BuPeer) (BuPeer, bool) {
+
+	peerStr := strings.TrimSpace(string(peer))
 	ipv4 := regexp.MustCompile(`^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?):([0-9]{1,5})$`)
 	ipv6 := regexp.MustCompile(`^\[([a-fA-F0-9:]+)\]:([0-9]{1,5})$`)
 	domain := regexp.MustCompile(`^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}:([0-9]{1,5})$`)
 
-	isIPv4 := ipv4.MatchString(peer)
-	isIPv6 := ipv6.MatchString(peer)
-	isDomain := domain.MatchString(peer)
+	isIPv4 := ipv4.MatchString(peerStr)
+	isIPv6 := ipv6.MatchString(peerStr)
+	isDomain := domain.MatchString(peerStr)
 
 	if !isIPv4 && !isIPv6 && !isDomain {
 		return "", false
 	}
 
-	lastColon := strings.LastIndex(peer, ":")
+	lastColon := strings.LastIndex(peerStr, ":")
 	if lastColon == -1 {
 		return "", false
 	}
-	portStr := peer[lastColon+1:]
+	portStr := peerStr[lastColon+1:]
 	port, err := strconv.Atoi(portStr)
 	if err != nil || port <= 0 || port > 65535 {
 		return "", false
 	}
-	host := peer[:lastColon]
+	host := peerStr[:lastColon]
 
 	if isIPv6 {
 		if host == "::1" || host == "[::1]" ||
@@ -144,11 +145,11 @@ func sanitizePeer(peer string) (string, bool) {
 			}
 		}
 	}
-	return peer, true
+	return BuPeer(peerStr), true
 }
 
 // Add new peers
-func AppendPeers(peers []string, server string) {
+func AppendPeers(peers Peers, server string) {
 	knownPeersMutex.Lock()
 	defer knownPeersMutex.Unlock()
 	changed := false
@@ -174,7 +175,7 @@ func SelectRandomPeersPerSource(count int) []string {
 
 	peersBySource := make(map[string][]string)
 	for peer, source := range knownPeers {
-		peersBySource[source] = append(peersBySource[source], peer)
+		peersBySource[source] = append(peersBySource[source], string(peer))
 	}
 	selected := []string{}
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))

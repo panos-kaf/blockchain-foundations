@@ -51,7 +51,7 @@ func (p *Peer) SendHello() error {
 }
 
 func (p *Peer) SendError(name ErrorCode, description string) error {
-	msg, err := messages.MakeErrorMessage(name, description)
+	msg, err := messages.MakeErrorMessage(name, BuString(description))
 	return p.SendMessage(MSG_ERROR, name, msg, err)
 }
 
@@ -60,7 +60,7 @@ func (p *Peer) SendGetPeers() error {
 	return p.SendMessage(MSG_GETPEERS, E_NONE, msg, err)
 }
 
-func (p *Peer) SendPeers(peers []string) error {
+func (p *Peer) SendPeers(peers Peers) error {
 	msg, err := messages.MakePeersMessage(peers)
 	return p.SendMessage(MSG_PEERS, E_NONE, msg, err)
 }
