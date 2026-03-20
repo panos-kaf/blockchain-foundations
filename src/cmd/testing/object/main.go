@@ -169,7 +169,7 @@ func testUnknownObject(p *Peer) {
 	fmt.Println("\n[Test 2a(i)] UNKNOWN_OBJECT")
 
 	tx := messages.Transaction{
-		Type: messages.TRANSACTION,
+		Type: messages.OBJ_TRANSACTION,
 		Inputs: []messages.TxInput{
 			{
 				Outpoint: messages.Outpoint{
@@ -201,7 +201,7 @@ func testInvalidSignature(p *Peer, coinbaseID messages.HashID) {
 	v := 10
 
 	tx := messages.Transaction{
-		Type: messages.TRANSACTION,
+		Type: messages.OBJ_TRANSACTION,
 		Inputs: []messages.TxInput{
 			{
 				Outpoint: messages.Outpoint{Txid: coinbaseID, Index: 0},
@@ -224,7 +224,7 @@ func testInvalidOutpoint(p *Peer, coinbaseID messages.HashID) {
 	v := 10
 
 	tx := messages.Transaction{
-		Type: messages.TRANSACTION,
+		Type: messages.OBJ_TRANSACTION,
 		Inputs: []messages.TxInput{
 			{
 				Outpoint: messages.Outpoint{Txid: coinbaseID, Index: 999},
@@ -243,10 +243,10 @@ func testInvalidOutpoint(p *Peer, coinbaseID messages.HashID) {
 func testConservation(p *Peer, coinbaseID messages.HashID, sig messages.Signature) {
 	fmt.Println("\n[Test 2a(iv)] INVALID_TX_CONSERVATION")
 
-	v := 999999999
+	v := 50000000001
 
 	tx := messages.Transaction{
-		Type: messages.TRANSACTION,
+		Type: messages.OBJ_TRANSACTION,
 		Inputs: []messages.TxInput{
 			{
 				Outpoint: messages.Outpoint{Txid: coinbaseID, Index: 0},
@@ -295,10 +295,10 @@ func main() {
 	   Coinbase
 	--------------------------*/
 	h := 0
-	v := 50000000001
+	v := 50000000000
 
 	coinbase := messages.CoinbaseTransaction{
-		Type:   messages.TRANSACTION,
+		Type:   messages.OBJ_TRANSACTION,
 		Height: &h,
 		Outputs: []messages.TxOutput{
 			{Pubkey: "39cd95f5cac18db4ca13e9a47b507811da4a6a158ba4a2f89e183e5123c52ae4", Value: &v},
@@ -318,7 +318,8 @@ func main() {
 	   Object exchange
 	--------------------------*/
 	testSelfObjectRetrieval(p1, coinbaseID, coinbaseMsg)
-	testIHaveFlow(p1, coinbaseID)
+	dummyHash := messages.HashID("0000000000000000000000000000000000000000000000000000000000001234")
+	testIHaveFlow(p1, dummyHash)
 	testGossip(p1, p2, coinbaseID, coinbaseMsg)
 
 	/* -------------------------
@@ -332,5 +333,5 @@ func main() {
 	testConservation(p1, coinbaseID, sig)
 	testInvalidFormat(p1)
 
-	fmt.Println("\n🎉 All tests executed")
+	fmt.Println("\nAll tests executed")
 }
