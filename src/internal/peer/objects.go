@@ -40,66 +40,77 @@ func (p *Peer) ValidateObject(obj Object) (ErrorCode, error) {
 }
 
 func (p *Peer) ValidateTransaction(tx *Transaction) (int, ErrorCode, error) {
-	if tx.Type != OBJ_TRANSACTION {
-		return 0, E_INTERNAL_ERROR, fmt.Errorf("Invalid object type for transaction: %s", tx.Type)
+	if tx.Type != messages.OBJ_TRANSACTION {
+		return 0, messages.E_INTERNAL_ERROR, fmt.Errorf("Invalid object type for transaction: %s", tx.Type)
 	}
 
 	sumInputs, sumOutputs := 0, 0
 
+	// 1. Create a quick struct to hold the data we need for crypto later
+	type sigData struct {
+		pubkey string
+		sig    string
+	}
+	var verifyQueue []sigData
+
+	// input/output transaction validity checks
 	for i, input := range tx.Inputs {
 		outpoint := input.Outpoint
-		// Find the referenced transaction
+
 		exists, err := p.objectManager.Exists(outpoint.Txid)
 		if !exists || err != nil {
-			err = fmt.Errorf("Referenced transaction %s for input %d does not exist: %v", outpoint.Txid, i, err)
-			return 0, E_UNKNOWN_OBJECT, err
+			return 0, messages.E_UNKNOWN_OBJECT, fmt.Errorf("Referenced transaction %s for input %d does not exist", outpoint.Txid, i)
 		}
+
 		obj, err := p.objectManager.Get(outpoint.Txid)
 		if err != nil {
-			err = fmt.Errorf("Failed to fetch referenced transaction %s for input %d: %v", outpoint.Txid, i, err)
-			return 0, E_UNKNOWN_OBJECT, err
+			return 0, messages.E_UNKNOWN_OBJECT, fmt.Errorf("Failed to fetch referenced transaction")
 		}
-		// Check that the referenced object is indeed a transaction or a coinbase transaction
 
-		var outputs []TxOutput
-
+		var outputs []messages.TxOutput
 		switch txObj := obj.(type) {
 		case *Transaction:
 			outputs = txObj.Outputs
 		case *CoinbaseTransaction:
 			outputs = txObj.Outputs
-		case *Block:
-			return 0, E_INTERNAL_ERROR, fmt.Errorf("Referenced object %s for input %d is a block, expected transaction", outpoint.Txid, i)
 		default:
-			return 0, E_INTERNAL_ERROR, fmt.Errorf("Referenced object %s for input %d is of unknown type, expected transaction", outpoint.Txid, i)
+			return 0, messages.E_INTERNAL_ERROR, fmt.Errorf("Referenced object is of unknown type")
 		}
 
 		if outpoint.Index < 0 || outpoint.Index >= len(outputs) {
-			return 0, E_INVALID_TX_OUTPOINT, fmt.Errorf("Invalid output index %d in input %d referencing transaction %s", outpoint.Index, i, outpoint.Txid)
+			return 0, messages.E_INVALID_TX_OUTPOINT, fmt.Errorf("Invalid output index")
 		}
-		output := outputs[outpoint.Index]
 
+		output := outputs[outpoint.Index]
 		sumInputs += *output.Value
 
 		if input.Sig == nil {
-			return 0, E_INVALID_TX_SIGNATURE, fmt.Errorf("Missing signature for input %d referencing transaction %s", i, outpoint.Txid)
+			return 0, E_INVALID_TX_SIGNATURE, fmt.Errorf("Missing signature")
 		}
-		sig := string(*input.Sig)
-		pubkey := string(output.Pubkey)
-		msg := messages.TxMessageForSignature(tx)
 
-		if !crypto.Verify(pubkey, msg, sig) {
-			err = fmt.Errorf("Invalid signature for input %d: pubkey %s, sig %s", i, pubkey, sig)
-			return 0, E_INVALID_TX_SIGNATURE, err
-		}
+		// cache pubkey and sig for later verification
+		verifyQueue = append(verifyQueue, sigData{
+			pubkey: string(output.Pubkey),
+			sig:    string(*input.Sig),
+		})
 	}
 
+	// conservation check
 	for _, output := range tx.Outputs {
 		sumOutputs += *output.Value
 	}
 
 	if sumOutputs > sumInputs {
 		return 0, E_INVALID_TX_CONSERVATION, fmt.Errorf("Output value %d exceeds input value %d", sumOutputs, sumInputs)
+	}
+
+	// sig verification
+	msg := messages.TxMessageForSignature(tx)
+
+	for i, data := range verifyQueue {
+		if !crypto.Verify(data.pubkey, msg, data.sig) {
+			return 0, E_INVALID_TX_SIGNATURE, fmt.Errorf("Invalid signature for input %d", i)
+		}
 	}
 
 	fee := sumInputs - sumOutputs
