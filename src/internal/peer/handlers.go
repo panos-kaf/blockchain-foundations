@@ -6,21 +6,21 @@ import (
 	"strconv"
 )
 
-func (p *Peer) handleHello(msg *HelloSchema) {
+func (p *Peer) handleHello(msg *HelloMessage) {
 	if msg.Agent != nil {
-		p.log(msg.Type, string(*msg.Agent)+" ("+p.addr+") says hello, version: "+string(msg.Version))
+		p.log(msg.Type, string(*msg.Agent)+" ("+p.addr+") says hello, version: "+string(msg.T_Version))
 	} else {
-		p.log(msg.Type, "Peer "+p.addr+" says hello, version: "+string(msg.Version))
+		p.log(msg.Type, "Peer "+p.addr+" says hello, version: "+string(msg.T_Version))
 	}
 	p.handshakeComplete = true
 }
 
-func (p *Peer) handleError(msg *ErrorSchema) {
+func (p *Peer) handleError(msg *ErrorMessage) {
 	p.log(msg.Type, string(msg.Name)+", peer: "+p.addr+", description: "+string(msg.Description)+")")
 }
 
 func (p *Peer) handleGetPeers() {
-	peers := make(Peers, 0, len(knownPeers))
+	peers := make(T_Peers, 0, len(knownPeers))
 	for peer := range knownPeers {
 		peers = append(peers, peer)
 	}
@@ -30,12 +30,12 @@ func (p *Peer) handleGetPeers() {
 	}
 }
 
-func (p *Peer) handlePeers(msg *PeersSchema) {
-	p.log(MSG_PEERS, "Peer "+p.addr+" sent "+strconv.Itoa(len(msg.Peers))+" peers")
-	AppendPeers(msg.Peers, p.addr)
+func (p *Peer) handlePeers(msg *PeersMessage) {
+	p.log(MSG_PEERS, "Peer "+p.addr+" sent "+strconv.Itoa(len(msg.T_Peers))+" peers")
+	AppendPeers(msg.T_Peers, p.addr)
 }
 
-func (p *Peer) handleGetObject(msg *GetObjectSchema) {
+func (p *Peer) handleGetObject(msg *GetObjectMessage) {
 
 	Log := func(m string) {
 		p.log(MSG_GETOBJECT, m)
@@ -68,7 +68,7 @@ func (p *Peer) handleGetObject(msg *GetObjectSchema) {
 	}
 }
 
-func (p *Peer) handleIHaveObject(msg *IHaveObjectSchema) {
+func (p *Peer) handleIHaveObject(msg *IHaveObjectMessage) {
 
 	Log := func(m string) {
 		p.log(MSG_IHAVEOBJECT, m)
@@ -96,7 +96,7 @@ func (p *Peer) handleIHaveObject(msg *IHaveObjectSchema) {
 	}
 }
 
-func (p *Peer) handleObject(msg *ObjectSchema) {
+func (p *Peer) handleObject(msg *ObjectMessage) {
 
 	Log := func(m string) {
 		p.log(MSG_OBJECT, m)
@@ -118,7 +118,7 @@ func (p *Peer) handleObject(msg *ObjectSchema) {
 		return
 	}
 
-	hashID := HashID(ID)
+	hashID := T_HashID(ID)
 
 	Log("Received MSG_OBJECT with ID " + ID + " from peer: " + p.addr)
 
@@ -153,7 +153,7 @@ func (p *Peer) handleGetMempool() {
 	p.log(MSG_GETMEMPOOL, "not handled yet")
 }
 
-func (p *Peer) handleMempool(msg *MempoolSchema) {
+func (p *Peer) handleMempool(msg *MempoolMessage) {
 	p.log(msg.Type, "not handled yet")
 }
 
@@ -161,6 +161,6 @@ func (p *Peer) handleGetChainTip() {
 	p.log(MSG_GETCHAINTIP, "not handled yet")
 }
 
-func (p *Peer) handleChainTip(msg *ChainTipSchema) {
+func (p *Peer) handleChainTip(msg *ChainTipMessage) {
 	p.log(msg.Type, "not handled yet")
 }

@@ -11,11 +11,11 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
-type HashID = messages.HashID
+type T_HashID = messages.T_HashID
 
 type ObjectManager struct {
 	db           *leveldb.DB
-	pendingFinds map[HashID][]chan messages.Object
+	pendingFinds map[T_HashID][]chan messages.Object
 	mutex        sync.Mutex
 }
 
@@ -26,15 +26,15 @@ func NewObjectManager(path string) (*ObjectManager, error) {
 	}
 	return &ObjectManager{
 		db:           db,
-		pendingFinds: make(map[HashID][]chan messages.Object),
+		pendingFinds: make(map[T_HashID][]chan messages.Object),
 	}, nil
 }
 
-func (om *ObjectManager) Exists(id HashID) (bool, error) {
+func (om *ObjectManager) Exists(id T_HashID) (bool, error) {
 	return om.db.Has([]byte(id), nil)
 }
 
-func (om *ObjectManager) Get(id HashID) (messages.Object, error) {
+func (om *ObjectManager) Get(id T_HashID) (messages.Object, error) {
 	data, err := om.db.Get([]byte(id), nil)
 	if err != nil {
 		return nil, err
@@ -58,20 +58,20 @@ func (om *ObjectManager) Get(id HashID) (messages.Object, error) {
 		}
 
 		if probe.Height != nil {
-			var cb messages.CoinbaseTransaction
+			var cb messages.T_CoinbaseTransaction
 			if err := json.Unmarshal(data, &cb); err != nil {
 				return nil, err
 			}
 			return &cb, nil
 		} else {
-			var tx messages.Transaction
+			var tx messages.T_Transaction
 			if err := json.Unmarshal(data, &tx); err != nil {
 				return nil, err
 			}
 			return &tx, nil
 		}
 	case "block":
-		var blk messages.Block
+		var blk messages.T_Block
 		if err := json.Unmarshal(data, &blk); err != nil {
 			return nil, err
 		}
@@ -82,7 +82,7 @@ func (om *ObjectManager) Get(id HashID) (messages.Object, error) {
 	}
 }
 
-func (om *ObjectManager) Put(object messages.Object) (HashID, error) {
+func (om *ObjectManager) Put(object messages.Object) (T_HashID, error) {
 	canon, err := messages.Canonicalize(object)
 	if err != nil {
 		return "", err
@@ -102,12 +102,12 @@ func (om *ObjectManager) Put(object messages.Object) (HashID, error) {
 		return "", err
 	}
 
-	hashID := HashID(id)
+	hashID := T_HashID(id)
 	return hashID, nil
 }
 
 // Implement FindObject with channels for pending requests
-func (om *ObjectManager) FindObject(id HashID) (messages.Object, error) {
+func (om *ObjectManager) FindObject(id T_HashID) (messages.Object, error) {
 	// First, try to get the object immediately
 	obj, err := om.Get(id)
 	if err == nil {
@@ -129,7 +129,7 @@ func (om *ObjectManager) FindObject(id HashID) (messages.Object, error) {
 }
 
 // When you later receive the object (e.g., after a network fetch and Put):
-func (om *ObjectManager) notifyWaiters(id HashID, obj messages.Object) {
+func (om *ObjectManager) notifyWaiters(id T_HashID, obj messages.Object) {
 	om.mutex.Lock()
 	defer om.mutex.Unlock()
 	for _, ch := range om.pendingFinds[id] {

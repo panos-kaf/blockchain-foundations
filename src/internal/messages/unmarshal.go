@@ -21,17 +21,17 @@ func ValidateVersionString(val string) (error, ErrorCode) {
 }
 
 var messageTypeRegistry = map[string]reflect.Type{
-	string(MSG_HELLO):       reflect.TypeOf(HelloSchema{}),
-	string(MSG_ERROR):       reflect.TypeOf(ErrorSchema{}),
-	string(MSG_GETPEERS):    reflect.TypeOf(GetPeersSchema{}),
-	string(MSG_PEERS):       reflect.TypeOf(PeersSchema{}),
-	string(MSG_GETOBJECT):   reflect.TypeOf(GetObjectSchema{}),
-	string(MSG_IHAVEOBJECT): reflect.TypeOf(IHaveObjectSchema{}),
-	string(MSG_OBJECT):      reflect.TypeOf(ObjectSchema{}),
-	string(MSG_GETMEMPOOL):  reflect.TypeOf(GetMempoolSchema{}),
-	string(MSG_MEMPOOL):     reflect.TypeOf(MempoolSchema{}),
-	string(MSG_GETCHAINTIP): reflect.TypeOf(GetChainTipSchema{}),
-	string(MSG_CHAINTIP):    reflect.TypeOf(ChainTipSchema{}),
+	string(MSG_HELLO):       reflect.TypeOf(HelloMessage{}),
+	string(MSG_ERROR):       reflect.TypeOf(ErrorMessage{}),
+	string(MSG_GETPEERS):    reflect.TypeOf(GetPeersMessage{}),
+	string(MSG_PEERS):       reflect.TypeOf(PeersMessage{}),
+	string(MSG_GETOBJECT):   reflect.TypeOf(GetObjectMessage{}),
+	string(MSG_IHAVEOBJECT): reflect.TypeOf(IHaveObjectMessage{}),
+	string(MSG_OBJECT):      reflect.TypeOf(ObjectMessage{}),
+	string(MSG_GETMEMPOOL):  reflect.TypeOf(GetMempoolMessage{}),
+	string(MSG_MEMPOOL):     reflect.TypeOf(MempoolMessage{}),
+	string(MSG_GETCHAINTIP): reflect.TypeOf(GetChainTipMessage{}),
+	string(MSG_CHAINTIP):    reflect.TypeOf(ChainTipMessage{}),
 }
 
 func UnmarshalMessage(raw string) (Message, error, ErrorCode) {
@@ -76,7 +76,7 @@ func (mt *MessageType) UnmarshalJSON(data []byte) error {
 	}
 }
 
-func (v *Version) UnmarshalJSON(data []byte) error {
+func (v *T_Version) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
 		return fmt.Errorf("invalid version format: %w", err)
@@ -84,7 +84,7 @@ func (v *Version) UnmarshalJSON(data []byte) error {
 	if !versionRegex.MatchString(s) {
 		return fmt.Errorf("invalid version format: %s", s)
 	}
-	*v = Version(s)
+	*v = T_Version(s)
 	return nil
 }
 
@@ -118,7 +118,7 @@ func (ot *ObjectType) UnmarshalJSON(data []byte) error {
 	}
 }
 
-func (p *Peer) UnmarshalJSON(data []byte) error {
+func (p *T_Peer) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
 		return fmt.Errorf("invalid peer format: %w", err)
@@ -126,12 +126,12 @@ func (p *Peer) UnmarshalJSON(data []byte) error {
 	if !peerRegex.MatchString(s) {
 		return fmt.Errorf("invalid peer format: %s", s)
 	}
-	*p = Peer(s)
+	*p = T_Peer(s)
 	return nil
 }
 
 // Custom UnmarshalJSON for Hash IDs to enforce length and hex format
-func (h *HashID) UnmarshalJSON(data []byte) error {
+func (h *T_HashID) UnmarshalJSON(data []byte) error {
 	var s string
 
 	if err := json.Unmarshal(data, &s); err != nil {
@@ -149,12 +149,12 @@ func (h *HashID) UnmarshalJSON(data []byte) error {
 		}
 	}
 
-	*h = HashID(s)
+	*h = T_HashID(s)
 	return nil
 }
 
 // Custom UnmarshalJSON for Signatures to enforce length and hex format
-func (sig *Signature) UnmarshalJSON(data []byte) error {
+func (sig *T_Signature) UnmarshalJSON(data []byte) error {
 	var s string
 
 	if err := json.Unmarshal(data, &s); err != nil {
@@ -172,14 +172,14 @@ func (sig *Signature) UnmarshalJSON(data []byte) error {
 		}
 	}
 
-	*sig = Signature(s)
+	*sig = T_Signature(s)
 	return nil
 }
 
-// Custom UnmarshalJSON for ObjectSchema to handle dynamic inner object types (block, transaction, coinbase transaction)
-func (o *ObjectSchema) UnmarshalJSON(data []byte) error {
+// Custom UnmarshalJSON for ObjectMessage to handle dynamic inner object types (block, transaction, coinbase transaction)
+func (o *ObjectMessage) UnmarshalJSON(data []byte) error {
 
-	type Alias ObjectSchema
+	type Alias ObjectMessage
 
 	aux := &struct {
 		*Alias
@@ -201,7 +201,7 @@ func (o *ObjectSchema) UnmarshalJSON(data []byte) error {
 	// populate the Object field based on the type of the inner object
 	switch typeProbe.Type {
 	case OBJ_BLOCK:
-		var b Block
+		var b T_Block
 		if err := json.Unmarshal(o.RawObject, &b); err != nil {
 			return fmt.Errorf("failed to unmarshal block object: %w", err)
 		}
@@ -216,13 +216,13 @@ func (o *ObjectSchema) UnmarshalJSON(data []byte) error {
 		json.Unmarshal(o.RawObject, &cbProbe)
 
 		if cbProbe.Height != nil {
-			var cb CoinbaseTransaction
+			var cb T_CoinbaseTransaction
 			if err := json.Unmarshal(o.RawObject, &cb); err != nil {
 				return fmt.Errorf("failed to parse coinbase transaction: %w", err)
 			}
 			o.Object = &cb
 		} else {
-			var tx Transaction
+			var tx T_Transaction
 			if err := json.Unmarshal(o.RawObject, &tx); err != nil {
 				return fmt.Errorf("failed to parse transaction: %w", err)
 			}
@@ -234,7 +234,7 @@ func (o *ObjectSchema) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (n *BuInt) UnmarshalJSON(data []byte) error {
+func (n *T_BuInt) UnmarshalJSON(data []byte) error {
 	var i int
 	if err := json.Unmarshal(data, &i); err != nil {
 		return fmt.Errorf("invalid integer format: %w", err)
@@ -244,11 +244,11 @@ func (n *BuInt) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf("integer value must be non-negative, got %d", i)
 	}
 
-	*n = BuInt(i)
+	*n = T_BuInt(i)
 	return nil
 }
 
-func (s *BuString) UnmarshalJSON(data []byte) error {
+func (s *T_BuString) UnmarshalJSON(data []byte) error {
 	var str string
 
 	if err := json.Unmarshal(data, &str); err != nil {
@@ -258,7 +258,7 @@ func (s *BuString) UnmarshalJSON(data []byte) error {
 	if len(str) > maxArrLen {
 		return fmt.Errorf("string exceeds maximum length of %d characters, got %d", maxArrLen, len(str))
 	}
-	*s = BuString(str)
+	*s = T_BuString(str)
 	return nil
 }
 
@@ -275,15 +275,15 @@ func UnmarshalArray[T any](data []byte, target *[]T, maxLen int, fieldName strin
 	return nil
 }
 
-func (arr *BuInts) UnmarshalJSON(data []byte) error {
-	return UnmarshalArray(data, (*[]BuInt)(arr), maxArrLen, "BuInts")
+func (arr *T_BuInts) UnmarshalJSON(data []byte) error {
+	return UnmarshalArray(data, (*[]T_BuInt)(arr), maxArrLen, "T_BuInts")
 }
-func (arr *BuStrings) UnmarshalJSON(data []byte) error {
-	return UnmarshalArray(data, (*[]BuString)(arr), maxArrLen, "BuStrings")
+func (arr *T_BuStrings) UnmarshalJSON(data []byte) error {
+	return UnmarshalArray(data, (*[]T_BuString)(arr), maxArrLen, "T_BuStrings")
 }
-func (arr *HashIDs) UnmarshalJSON(data []byte) error {
-	return UnmarshalArray(data, (*[]HashID)(arr), maxArrLen, "HashIDs")
+func (arr *T_HashIDs) UnmarshalJSON(data []byte) error {
+	return UnmarshalArray(data, (*[]T_HashID)(arr), maxArrLen, "T_HashIDs")
 }
-func (arr *Peers) UnmarshalJSON(data []byte) error {
-	return UnmarshalArray(data, (*[]Peer)(arr), maxArrLen, "Peers")
+func (arr *T_Peers) UnmarshalJSON(data []byte) error {
+	return UnmarshalArray(data, (*[]T_Peer)(arr), maxArrLen, "T_Peers")
 }

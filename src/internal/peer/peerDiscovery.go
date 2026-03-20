@@ -16,13 +16,13 @@ import (
 )
 
 var (
-	BOOTSTRAP_PEERS = Peers{
+	BOOTSTRAP_PEERS = T_Peers{
 		"95.179.158.137:18018",
 		"95.179.132.22:18018",
 		"45.32.235.245:18018",
 	}
 	PEERS_FILE      = filepath.Join(".", "db", "peers.csv")
-	knownPeers      = make(map[BuPeer]string)
+	knownPeers      = make(map[T_Peer]string)
 	knownPeersMutex sync.Mutex
 )
 
@@ -54,7 +54,7 @@ func loadPeers() {
 		if len(rec) < 2 || rec[0] == "Address" {
 			continue
 		}
-		knownPeers[BuPeer(rec[0])] = rec[1]
+		knownPeers[T_Peer(rec[0])] = rec[1]
 	}
 }
 
@@ -77,10 +77,10 @@ func savePeers() {
 }
 
 // Get all known peers
-func GetKnownPeers() Peers {
+func GetKnownPeers() T_Peers {
 	knownPeersMutex.Lock()
 	defer knownPeersMutex.Unlock()
-	keys := make(Peers, 0, len(knownPeers))
+	keys := make(T_Peers, 0, len(knownPeers))
 	for k := range knownPeers {
 		keys = append(keys, k)
 	}
@@ -88,7 +88,7 @@ func GetKnownPeers() Peers {
 }
 
 // Validate and sanitize peer address
-func sanitizePeer(peer BuPeer) (BuPeer, bool) {
+func sanitizePeer(peer T_Peer) (T_Peer, bool) {
 
 	peerStr := strings.TrimSpace(string(peer))
 	ipv4 := regexp.MustCompile(`^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?):([0-9]{1,5})$`)
@@ -145,11 +145,11 @@ func sanitizePeer(peer BuPeer) (BuPeer, bool) {
 			}
 		}
 	}
-	return BuPeer(peerStr), true
+	return T_Peer(peerStr), true
 }
 
 // Add new peers
-func AppendPeers(peers Peers, server string) {
+func AppendPeers(peers T_Peers, server string) {
 	knownPeersMutex.Lock()
 	defer knownPeersMutex.Unlock()
 	changed := false

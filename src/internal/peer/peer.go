@@ -141,27 +141,27 @@ func (p *Peer) handleMessage(raw string) {
 
 	// Dispatch based on type
 	switch m := msg.(type) {
-	case *HelloSchema:
+	case *HelloMessage:
 		p.handleHello(m)
-	case *ErrorSchema:
+	case *ErrorMessage:
 		p.handleError(m)
-	case *GetPeersSchema:
+	case *GetPeersMessage:
 		p.handleGetPeers()
-	case *PeersSchema:
+	case *PeersMessage:
 		p.handlePeers(m)
-	case *GetObjectSchema:
+	case *GetObjectMessage:
 		p.handleGetObject(m)
-	case *IHaveObjectSchema:
+	case *IHaveObjectMessage:
 		p.handleIHaveObject(m)
-	case *ObjectSchema:
+	case *ObjectMessage:
 		p.handleObject(m)
-	case *GetMempoolSchema:
+	case *GetMempoolMessage:
 		p.handleGetMempool()
-	case *MempoolSchema:
+	case *MempoolMessage:
 		p.handleMempool(m)
-	case *GetChainTipSchema:
+	case *GetChainTipMessage:
 		p.handleGetChainTip()
-	case *ChainTipSchema:
+	case *ChainTipMessage:
 		p.handleChainTip(m)
 	default:
 		p.logErr(MSG_NONE, "Unknown message type")

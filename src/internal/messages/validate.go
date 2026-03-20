@@ -25,36 +25,36 @@ import (
 
 // -- Message Type Validators --
 
-func (h *HelloSchema) Validate() (error, ErrorCode) {
+func (h *HelloMessage) Validate() (error, ErrorCode) {
 	return nil, E_NONE
 }
 
-func (e *ErrorSchema) Validate() (error, ErrorCode) {
+func (e *ErrorMessage) Validate() (error, ErrorCode) {
 	return nil, E_NONE
 }
 
-func (g *GetPeersSchema) Validate() (error, ErrorCode) {
+func (g *GetPeersMessage) Validate() (error, ErrorCode) {
 	return nil, E_NONE
 }
 
-func (p *PeersSchema) Validate() (error, ErrorCode) {
+func (p *PeersMessage) Validate() (error, ErrorCode) {
 	return nil, E_NONE
 	// Obsolete (?)
-	// peers, err, code := ValidatePeers(p.Peers)
-	// p.Peers = peers
+	// peers, err, code := ValidatePeers(p.T_Peers)
+	// p.T_Peers = peers
 
 	// return err, code
 }
 
-func (g *GetObjectSchema) Validate() (error, ErrorCode) {
+func (g *GetObjectMessage) Validate() (error, ErrorCode) {
 	return nil, E_NONE
 }
 
-func (i *IHaveObjectSchema) Validate() (error, ErrorCode) {
+func (i *IHaveObjectMessage) Validate() (error, ErrorCode) {
 	return nil, E_NONE
 }
 
-func (o *ObjectSchema) Validate() (error, ErrorCode) {
+func (o *ObjectMessage) Validate() (error, ErrorCode) {
 
 	if o.Object == nil {
 		return fmt.Errorf("object could not get parsed"), E_INVALID_FORMAT
@@ -63,18 +63,18 @@ func (o *ObjectSchema) Validate() (error, ErrorCode) {
 	return o.Object.Validate()
 }
 
-func (g *GetMempoolSchema) Validate() (error, ErrorCode) {
+func (g *GetMempoolMessage) Validate() (error, ErrorCode) {
 	return nil, E_NONE
 }
 
-func (m *MempoolSchema) Validate() (error, ErrorCode) {
+func (m *MempoolMessage) Validate() (error, ErrorCode) {
 	return nil, E_NONE
 }
 
-func (g *GetChainTipSchema) Validate() (error, ErrorCode) {
+func (g *GetChainTipMessage) Validate() (error, ErrorCode) {
 	return nil, E_NONE
 }
 
-func (c *ChainTipSchema) Validate() (error, ErrorCode) {
+func (c *ChainTipMessage) Validate() (error, ErrorCode) {
 	return nil, E_NONE
 }

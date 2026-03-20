@@ -16,7 +16,7 @@ func StartNode(objectManager *object.ObjectManager) {
 	go peer.StartServer(18018, objectManager)
 
 	for _, p := range peer.BOOTSTRAP_PEERS {
-		go func(p messages.Peer) {
+		go func(p messages.T_Peer) {
 			host, portStr, _ := net.SplitHostPort(string(p))
 			port, _ := strconv.Atoi(portStr)
 			err := peer.StartClient(host, port, objectManager, func() {

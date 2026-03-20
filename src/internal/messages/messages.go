@@ -12,17 +12,17 @@ type (
 
 	MessageType string
 	ErrorCode   string
-	Version     string
-	Peer        string
-	Peers       []Peer
-	HashID      string // 32byte (64-character) hex string
-	HashIDs     []HashID
-	Signature   string // 64byte (128-character) hex string
+	T_Version   string
+	T_Peer      string
+	T_Peers     []T_Peer
+	T_HashID    string // 32byte (64-character) hex string
+	T_HashIDs   []T_HashID
+	T_Signature string // 64byte (128-character) hex string
 
-	BuInt     int
-	BuString  string
-	BuInts    []BuInt
-	BuStrings []BuString
+	T_BuInt     int
+	T_BuString  string
+	T_BuInts    []T_BuInt
+	T_BuStrings []T_BuString
 )
 
 const (
@@ -55,38 +55,38 @@ const (
 )
 
 type (
-	HelloSchema struct {
-		Type    MessageType `json:"type"`
-		Version Version     `json:"version"`
-		Agent   *BuString   `json:"agent,omitempty"`
+	HelloMessage struct {
+		Type      MessageType `json:"type"`
+		T_Version T_Version   `json:"version"`
+		Agent     *T_BuString `json:"agent,omitempty"`
 	}
 
-	ErrorSchema struct {
+	ErrorMessage struct {
 		Type        MessageType `json:"type"`
 		Name        ErrorCode   `json:"name"`
-		Description BuString    `json:"description"`
+		Description T_BuString  `json:"description"`
 	}
 
-	GetPeersSchema struct {
+	GetPeersMessage struct {
 		Type MessageType `json:"type"`
 	}
 
-	PeersSchema struct {
-		Type  MessageType `json:"type"`
-		Peers Peers       `json:"peers"`
+	PeersMessage struct {
+		Type    MessageType `json:"type"`
+		T_Peers T_Peers     `json:"peers"`
 	}
 
-	GetObjectSchema struct {
+	GetObjectMessage struct {
 		Type     MessageType `json:"type"`
-		ObjectID HashID      `json:"objectid"`
+		ObjectID T_HashID    `json:"objectid"`
 	}
 
-	IHaveObjectSchema struct {
+	IHaveObjectMessage struct {
 		Type     MessageType `json:"type"`
-		ObjectID HashID      `json:"objectid"`
+		ObjectID T_HashID    `json:"objectid"`
 	}
 
-	ObjectSchema struct {
+	ObjectMessage struct {
 		Type MessageType `json:"type"`
 
 		// The raw, unparsed JSON of the object.
@@ -96,57 +96,57 @@ type (
 		Object Object `json:"-"`
 	}
 
-	GetMempoolSchema struct {
+	GetMempoolMessage struct {
 		Type MessageType `json:"type"`
 	}
 
-	MempoolSchema struct {
+	MempoolMessage struct {
 		Type  MessageType `json:"type"`
-		Txids HashIDs     `json:"txids"`
+		Txids T_HashIDs   `json:"txids"`
 	}
 
-	GetChainTipSchema struct {
+	GetChainTipMessage struct {
 		Type MessageType `json:"type"`
 	}
 
-	ChainTipSchema struct {
-		Type  MessageType `json:"type"`
-		Block HashID      `json:"block"`
+	ChainTipMessage struct {
+		Type    MessageType `json:"type"`
+		T_Block T_HashID    `json:"block"`
 	}
 )
 
 // -- message type getters --
 
-func (h *HelloSchema) MessageType() MessageType {
+func (h *HelloMessage) MessageType() MessageType {
 	return MSG_HELLO
 }
-func (e *ErrorSchema) MessageType() MessageType {
+func (e *ErrorMessage) MessageType() MessageType {
 	return MSG_ERROR
 }
-func (g *GetPeersSchema) MessageType() MessageType {
+func (g *GetPeersMessage) MessageType() MessageType {
 	return MSG_GETPEERS
 }
-func (p *PeersSchema) MessageType() MessageType {
+func (p *PeersMessage) MessageType() MessageType {
 	return MSG_PEERS
 }
-func (g *GetObjectSchema) MessageType() MessageType {
+func (g *GetObjectMessage) MessageType() MessageType {
 	return MSG_GETOBJECT
 }
-func (i *IHaveObjectSchema) MessageType() MessageType {
+func (i *IHaveObjectMessage) MessageType() MessageType {
 	return MSG_IHAVEOBJECT
 }
-func (o *ObjectSchema) MessageType() MessageType {
+func (o *ObjectMessage) MessageType() MessageType {
 	return MSG_OBJECT
 }
-func (g *GetMempoolSchema) MessageType() MessageType {
+func (g *GetMempoolMessage) MessageType() MessageType {
 	return MSG_GETMEMPOOL
 }
-func (m *MempoolSchema) MessageType() MessageType {
+func (m *MempoolMessage) MessageType() MessageType {
 	return MSG_MEMPOOL
 }
-func (g *GetChainTipSchema) MessageType() MessageType {
+func (g *GetChainTipMessage) MessageType() MessageType {
 	return MSG_GETCHAINTIP
 }
-func (c *ChainTipSchema) MessageType() MessageType {
+func (c *ChainTipMessage) MessageType() MessageType {
 	return MSG_CHAINTIP
 }

@@ -89,10 +89,10 @@ func CanonicalizeMessage(msg Message) (string, error) {
 }
 
 // Creates a canonical transaction with nil signatures for signing/verification
-func TxMessageForSignature(tx *Transaction) []byte {
+func TxMessageForSignature(tx *T_Transaction) []byte {
 	// Create a copy of the transaction with empty signatures for signing/verification
 	txCopy := *tx
-	txCopy.Inputs = make([]TxInput, len(tx.Inputs))
+	txCopy.Inputs = make([]T_TxInput, len(tx.Inputs))
 	copy(txCopy.Inputs, tx.Inputs)
 	for i := range txCopy.Inputs {
 		txCopy.Inputs[i].Sig = nil

@@ -51,7 +51,7 @@ func (p *Peer) SendHello() error {
 }
 
 func (p *Peer) SendError(name ErrorCode, description string) error {
-	msg, err := messages.MakeErrorMessage(name, BuString(description))
+	msg, err := messages.MakeErrorMessage(name, T_BuString(description))
 	return p.SendMessage(MSG_ERROR, name, msg, err)
 }
 
@@ -60,17 +60,17 @@ func (p *Peer) SendGetPeers() error {
 	return p.SendMessage(MSG_GETPEERS, E_NONE, msg, err)
 }
 
-func (p *Peer) SendPeers(peers Peers) error {
+func (p *Peer) SendPeers(peers T_Peers) error {
 	msg, err := messages.MakePeersMessage(peers)
 	return p.SendMessage(MSG_PEERS, E_NONE, msg, err)
 }
 
-func (p *Peer) SendGetObject(objectID HashID) error {
+func (p *Peer) SendGetObject(objectID T_HashID) error {
 	msg, err := messages.MakeGetObjectMessage(objectID)
 	return p.SendMessage(MSG_GETOBJECT, E_NONE, msg, err)
 }
 
-func (p *Peer) SendIHaveObject(objectID HashID) error {
+func (p *Peer) SendIHaveObject(objectID T_HashID) error {
 	msg, err := messages.MakeIHaveObjectMessage(objectID)
 	return p.SendMessage(MSG_IHAVEOBJECT, E_NONE, msg, err)
 }
@@ -85,7 +85,7 @@ func (p *Peer) SendGetMempool() error {
 	return p.SendMessage(MSG_GETMEMPOOL, E_NONE, msg, err)
 }
 
-func (p *Peer) SendMempool(txIDs []HashID) error {
+func (p *Peer) SendMempool(txIDs []T_HashID) error {
 	msg, err := messages.MakeMempoolMessage(txIDs)
 	return p.SendMessage(MSG_MEMPOOL, E_NONE, msg, err)
 }
@@ -95,7 +95,7 @@ func (p *Peer) SendGetChainTip() error {
 	return p.SendMessage(MSG_GETCHAINTIP, E_NONE, msg, err)
 }
 
-func (p *Peer) SendChainTip(chainTip HashID) error {
+func (p *Peer) SendChainTip(chainTip T_HashID) error {
 	msg, err := messages.MakeChainTipMessage(chainTip)
 	return p.SendMessage(MSG_CHAINTIP, E_NONE, msg, err)
 }

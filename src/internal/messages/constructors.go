@@ -8,18 +8,18 @@ import (
 
 func MakeHelloMessage() (string, error) {
 
-	version := Version("0.10.0")
-	agent := BuString("marabobos")
+	version := T_Version("0.10.0")
+	agent := T_BuString("marabobos")
 
-	return CanonicalizeMessage(&HelloSchema{
-		Type:    MSG_HELLO,
-		Version: version,
-		Agent:   &agent,
+	return CanonicalizeMessage(&HelloMessage{
+		Type:      MSG_HELLO,
+		T_Version: version,
+		Agent:     &agent,
 	})
 }
 
-func MakeErrorMessage(name ErrorCode, description BuString) (string, error) {
-	return CanonicalizeMessage(&ErrorSchema{
+func MakeErrorMessage(name ErrorCode, description T_BuString) (string, error) {
+	return CanonicalizeMessage(&ErrorMessage{
 		Type:        MSG_ERROR,
 		Name:        name,
 		Description: description,
@@ -27,27 +27,27 @@ func MakeErrorMessage(name ErrorCode, description BuString) (string, error) {
 }
 
 func MakeGetPeersMessage() (string, error) {
-	return CanonicalizeMessage(&GetPeersSchema{
+	return CanonicalizeMessage(&GetPeersMessage{
 		Type: MSG_GETPEERS,
 	})
 }
 
-func MakePeersMessage(peers []Peer) (string, error) {
-	return CanonicalizeMessage(&PeersSchema{
-		Type:  MSG_PEERS,
-		Peers: peers,
+func MakePeersMessage(peers T_Peers) (string, error) {
+	return CanonicalizeMessage(&PeersMessage{
+		Type:    MSG_PEERS,
+		T_Peers: peers,
 	})
 }
 
-func MakeGetObjectMessage(objectID HashID) (string, error) {
-	return CanonicalizeMessage(&GetObjectSchema{
+func MakeGetObjectMessage(objectID T_HashID) (string, error) {
+	return CanonicalizeMessage(&GetObjectMessage{
 		Type:     MSG_GETOBJECT,
 		ObjectID: objectID,
 	})
 }
 
-func MakeIHaveObjectMessage(objectID HashID) (string, error) {
-	return CanonicalizeMessage(&IHaveObjectSchema{
+func MakeIHaveObjectMessage(objectID T_HashID) (string, error) {
+	return CanonicalizeMessage(&IHaveObjectMessage{
 		Type:     MSG_IHAVEOBJECT,
 		ObjectID: objectID,
 	})
@@ -58,34 +58,34 @@ func MakeObjectMessage(obj Object) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return CanonicalizeMessage(&ObjectSchema{
+	return CanonicalizeMessage(&ObjectMessage{
 		Type:      MSG_OBJECT,
 		RawObject: json.RawMessage(raw),
 	})
 }
 
 func MakeGetMempoolMessage() (string, error) {
-	return CanonicalizeMessage(&GetMempoolSchema{
+	return CanonicalizeMessage(&GetMempoolMessage{
 		Type: MSG_GETMEMPOOL,
 	})
 }
 
-func MakeMempoolMessage(Txids []HashID) (string, error) {
-	return CanonicalizeMessage(&MempoolSchema{
+func MakeMempoolMessage(Txids T_HashIDs) (string, error) {
+	return CanonicalizeMessage(&MempoolMessage{
 		Type:  MSG_MEMPOOL,
 		Txids: Txids,
 	})
 }
 
 func MakeGetChainTipMessage() (string, error) {
-	return CanonicalizeMessage(&GetChainTipSchema{
+	return CanonicalizeMessage(&GetChainTipMessage{
 		Type: MSG_GETCHAINTIP,
 	})
 }
 
-func MakeChainTipMessage(BlockID HashID) (string, error) {
-	return CanonicalizeMessage(&ChainTipSchema{
-		Type:  MSG_CHAINTIP,
-		Block: BlockID,
+func MakeChainTipMessage(BlockID T_HashID) (string, error) {
+	return CanonicalizeMessage(&ChainTipMessage{
+		Type:    MSG_CHAINTIP,
+		T_Block: BlockID,
 	})
 }

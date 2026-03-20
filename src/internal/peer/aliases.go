@@ -42,40 +42,47 @@ var (
 )
 
 type (
-	Message = messages.Message
 
+	// Interfaces
+	Message = messages.Message
+	Object  = messages.Object
+
+	// Message Field Types
 	MessageType = messages.MessageType
 	ErrorCode   = messages.ErrorCode
-	Version     = messages.Version
-	BuPeer      = messages.Peer
-	Peers       = messages.Peers
-	HashID      = messages.HashID
-	HashIDs     = messages.HashIDs
-	Signature   = messages.Signature
 
-	BuInt     = messages.BuInt
-	BuString  = messages.BuString
-	BuInts    = messages.BuInts
-	BuStrings = messages.BuStrings
+	T_Version   = messages.T_Version
+	T_Peer      = messages.T_Peer
+	T_Peers     = messages.T_Peers
+	T_HashID    = messages.T_HashID
+	T_HashIDs   = messages.T_HashIDs
+	T_Signature = messages.T_Signature
 
-	HelloSchema       = messages.HelloSchema
-	ErrorSchema       = messages.ErrorSchema
-	GetPeersSchema    = messages.GetPeersSchema
-	PeersSchema       = messages.PeersSchema
-	GetObjectSchema   = messages.GetObjectSchema
-	IHaveObjectSchema = messages.IHaveObjectSchema
-	ObjectSchema      = messages.ObjectSchema
-	GetMempoolSchema  = messages.GetMempoolSchema
-	MempoolSchema     = messages.MempoolSchema
-	GetChainTipSchema = messages.GetChainTipSchema
-	ChainTipSchema    = messages.ChainTipSchema
+	T_BuInt     = messages.T_BuInt
+	T_BuString  = messages.T_BuString
+	T_BuInts    = messages.T_BuInts
+	T_BuStrings = messages.T_BuStrings
 
-	Object              = messages.Object
-	Transaction         = messages.Transaction
-	CoinbaseTransaction = messages.CoinbaseTransaction
-	Block               = messages.Block
+	// Object-specific Field Types
+	T_Transaction         = messages.T_Transaction
+	T_CoinbaseTransaction = messages.T_CoinbaseTransaction
+	T_Block               = messages.T_Block
 
-	TxOutput = messages.TxOutput
-	TxInput  = messages.TxInput
-	Outpoint = messages.Outpoint
+	// Transaction-specific Field Types
+	T_TxOutput = messages.T_TxOutput
+	T_TxInput  = messages.T_TxInput
+	T_Outpoint = messages.T_Outpoint
+
+	// Message Schemas
+	HelloMessage       = messages.HelloMessage
+	ErrorMessage       = messages.ErrorMessage
+	GetPeersMessage    = messages.GetPeersMessage
+	PeersMessage       = messages.PeersMessage
+	GetObjectMessage   = messages.GetObjectMessage
+	IHaveObjectMessage = messages.IHaveObjectMessage
+	ObjectMessage      = messages.ObjectMessage
+	GetMempoolMessage  = messages.GetMempoolMessage
+	MempoolMessage     = messages.MempoolMessage
+	GetChainTipMessage = messages.GetChainTipMessage
+	ChainTipMessage    = messages.ChainTipMessage
 )
