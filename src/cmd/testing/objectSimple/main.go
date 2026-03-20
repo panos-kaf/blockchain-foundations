@@ -19,7 +19,7 @@ func receive(conn net.Conn) string {
 	return resp
 }
 
-func exchangeObject(objectID messages.HashID, objectMsg string, conn net.Conn, resp string) {
+func exchangeObject(objectID messages.T_HashID, objectMsg string, conn net.Conn, resp string) {
 	// 1. Send ihaveobject
 	ihaveMsg, _ := messages.MakeIHaveObjectMessage(objectID)
 	send(conn, ihaveMsg)
@@ -71,14 +71,14 @@ func main() {
 	fmt.Println("Received:", resp)
 	// Parse and check for getpeers response
 
-	height := 0
+	height := messages.T_BuInt(0)
+	val := messages.T_BuInt(50000000000)
 
-	val := 50000000000
 	// 1. Coinbase transaction
-	coinbaseTx := messages.CoinbaseTransaction{
+	coinbaseTx := messages.T_CoinbaseTransaction{
 		Type:   messages.OBJ_TRANSACTION,
 		Height: &height,
-		Outputs: []messages.TxOutput{
+		Outputs: []messages.T_TxOutput{
 			{
 				Pubkey: "958f8add086cc348e229a3b6590c71b7d7754e42134a127a50648bf07969d9a0",
 				Value:  &val,
@@ -86,36 +86,37 @@ func main() {
 		},
 	}
 	coinbaseIDstr, _ := crypto.HashObject(coinbaseTx)
-	coinbaseID := messages.HashID(coinbaseIDstr)
+	coinbaseID := messages.T_HashID(coinbaseIDstr)
 	coinbaseMsg, _ := messages.MakeObjectMessage(coinbaseTx)
-	fmt.Println("\n--- Coinbase Transaction Exchange ---")
+	fmt.Println("\n--- Coinbase T_Transaction Exchange ---")
 	fmt.Printf("Coinbase object message:\n%s\n\n", coinbaseMsg)
 	exchangeObject(coinbaseID, coinbaseMsg, conn, resp)
 
 	// 2. Regular transaction
-	sig := messages.Signature("060bf7cbe141fecfebf6dafbd6ebbcff25f82e729a7770f4f3b1f81a7ec8a0ce4b287597e609b822111bbe1a83d682ef14f018f8a9143cef25ecc9a8b0c1c405")
+	sig := messages.T_Signature("060bf7cbe141fecfebf6dafbd6ebbcff25f82e729a7770f4f3b1f81a7ec8a0ce4b287597e609b822111bbe1a83d682ef14f018f8a9143cef25ecc9a8b0c1c405")
 
-	input := messages.TxInput{
-		Outpoint: messages.Outpoint{Txid: coinbaseID, Index: 0},
-		Sig:      &sig,
+	input := messages.T_TxInput{
+		T_Outpoint: messages.T_Outpoint{Txid: coinbaseID, Index: 0},
+		Sig:        &sig,
 	}
 
-	val2 := 10
-	output := messages.TxOutput{
+	val2 := messages.T_BuInt(10)
+
+	output := messages.T_TxOutput{
 		Pubkey: "958f8add086cc348e229a3b6590c71b7d7754e42134a127a50648bf07969d9a0",
 		Value:  &val2,
 	}
 
-	regularTx := messages.Transaction{
+	regularTx := messages.T_Transaction{
 		Type:    messages.OBJ_TRANSACTION,
-		Inputs:  []messages.TxInput{input},
-		Outputs: []messages.TxOutput{output},
+		Inputs:  []messages.T_TxInput{input},
+		Outputs: []messages.T_TxOutput{output},
 	}
 
 	regularIDstr, _ := crypto.HashObject(regularTx)
-	regularID := messages.HashID(regularIDstr)
+	regularID := messages.T_HashID(regularIDstr)
 	regularMsg, _ := messages.MakeObjectMessage(regularTx)
-	fmt.Println("\n--- Regular Transaction Exchange ---")
+	fmt.Println("\n--- Regular T_Transaction Exchange ---")
 	fmt.Printf("Regular object message:\n%s\n\n", regularMsg)
 	exchangeObject(regularID, regularMsg, conn, resp)
 }

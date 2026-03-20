@@ -120,7 +120,7 @@ func handshake(p *Peer) {
 --------------------------*/
 
 // 1a
-func testSelfObjectRetrieval(p *Peer, objID messages.HashID, objMsg string) {
+func testSelfObjectRetrieval(p *Peer, objID messages.T_HashID, objMsg string) {
 	fmt.Println("\n[Test 1a] Self object retrieval")
 
 	p.send(objMsg)
@@ -130,7 +130,7 @@ func testSelfObjectRetrieval(p *Peer, objID messages.HashID, objMsg string) {
 }
 
 // 1d
-func testIHaveFlow(p *Peer, objID messages.HashID) {
+func testIHaveFlow(p *Peer, objID messages.T_HashID) {
 	fmt.Println("\n[Test 1d] ihaveobject -> getobject")
 
 	p.send(must(messages.MakeIHaveObjectMessage(objID)))
@@ -138,7 +138,7 @@ func testIHaveFlow(p *Peer, objID messages.HashID) {
 }
 
 // 1b + 1c
-func testGossip(p1, p2 *Peer, objID messages.HashID, objMsg string) {
+func testGossip(p1, p2 *Peer, objID messages.T_HashID, objMsg string) {
 	fmt.Println("\n[Test 1b/1c] Gossip between peers")
 
 	p1.send(objMsg)
@@ -168,12 +168,12 @@ func expectError(p *Peer, expected string) {
 func testUnknownObject(p *Peer) {
 	fmt.Println("\n[Test 2a(i)] UNKNOWN_OBJECT")
 
-	tx := messages.Transaction{
+	tx := messages.T_Transaction{
 		Type: messages.OBJ_TRANSACTION,
-		Inputs: []messages.TxInput{
+		Inputs: []messages.T_TxInput{
 			{
-				Outpoint: messages.Outpoint{
-					Txid:  messages.HashID("abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd"),
+				T_Outpoint: messages.T_Outpoint{
+					Txid:  messages.T_HashID("abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd"),
 					Index: 0,
 				},
 			},
@@ -195,20 +195,20 @@ func testUnknownObject(p *Peer) {
 // "type":"object"}
 
 // 2a(ii)
-func testInvalidSignature(p *Peer, coinbaseID messages.HashID) {
+func testInvalidSignature(p *Peer, coinbaseID messages.T_HashID) {
 	fmt.Println("\n[Test 2a(ii)] INVALID_TX_SIGNATURE")
 
-	v := 10
+	v := messages.T_BuInt(10)
 
-	tx := messages.Transaction{
+	tx := messages.T_Transaction{
 		Type: messages.OBJ_TRANSACTION,
-		Inputs: []messages.TxInput{
+		Inputs: []messages.T_TxInput{
 			{
-				Outpoint: messages.Outpoint{Txid: coinbaseID, Index: 0},
-				Sig:      nil,
+				T_Outpoint: messages.T_Outpoint{Txid: coinbaseID, Index: 0},
+				Sig:        nil,
 			},
 		},
-		Outputs: []messages.TxOutput{
+		Outputs: []messages.T_TxOutput{
 			{Pubkey: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890", Value: &v},
 		},
 	}
@@ -218,19 +218,19 @@ func testInvalidSignature(p *Peer, coinbaseID messages.HashID) {
 }
 
 // 2a(iii)
-func testInvalidOutpoint(p *Peer, coinbaseID messages.HashID) {
+func testInvalidOutpoint(p *Peer, coinbaseID messages.T_HashID) {
 	fmt.Println("\n[Test 2a(iii)] INVALID_TX_OUTPOINT")
 
-	v := 10
+	v := messages.T_BuInt(10)
 
-	tx := messages.Transaction{
+	tx := messages.T_Transaction{
 		Type: messages.OBJ_TRANSACTION,
-		Inputs: []messages.TxInput{
+		Inputs: []messages.T_TxInput{
 			{
-				Outpoint: messages.Outpoint{Txid: coinbaseID, Index: 999},
+				T_Outpoint: messages.T_Outpoint{Txid: coinbaseID, Index: 999},
 			},
 		},
-		Outputs: []messages.TxOutput{
+		Outputs: []messages.T_TxOutput{
 			{Pubkey: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890", Value: &v},
 		},
 	}
@@ -240,20 +240,20 @@ func testInvalidOutpoint(p *Peer, coinbaseID messages.HashID) {
 }
 
 // 2a(iv)
-func testConservation(p *Peer, coinbaseID messages.HashID, sig messages.Signature) {
+func testConservation(p *Peer, coinbaseID messages.T_HashID, sig messages.T_Signature) {
 	fmt.Println("\n[Test 2a(iv)] INVALID_TX_CONSERVATION")
 
-	v := 50000000001
+	v := messages.T_BuInt(50000000001)
 
-	tx := messages.Transaction{
+	tx := messages.T_Transaction{
 		Type: messages.OBJ_TRANSACTION,
-		Inputs: []messages.TxInput{
+		Inputs: []messages.T_TxInput{
 			{
-				Outpoint: messages.Outpoint{Txid: coinbaseID, Index: 0},
-				Sig:      &sig,
+				T_Outpoint: messages.T_Outpoint{Txid: coinbaseID, Index: 0},
+				Sig:        &sig,
 			},
 		},
-		Outputs: []messages.TxOutput{
+		Outputs: []messages.T_TxOutput{
 			{Pubkey: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890", Value: &v},
 		},
 	}
@@ -294,19 +294,19 @@ func main() {
 	/* -------------------------
 	   Coinbase
 	--------------------------*/
-	h := 0
-	v := 50000000000
+	h := messages.T_BuInt(0)
+	v := messages.T_BuInt(50000000000)
 
-	coinbase := messages.CoinbaseTransaction{
+	coinbase := messages.T_CoinbaseTransaction{
 		Type:   messages.OBJ_TRANSACTION,
 		Height: &h,
-		Outputs: []messages.TxOutput{
+		Outputs: []messages.T_TxOutput{
 			{Pubkey: "39cd95f5cac18db4ca13e9a47b507811da4a6a158ba4a2f89e183e5123c52ae4", Value: &v},
 		},
 	}
 
 	coinbaseIDstr, _ := crypto.HashObject(coinbase)
-	coinbaseID := messages.HashID(coinbaseIDstr)
+	coinbaseID := messages.T_HashID(coinbaseIDstr)
 	coinbaseMsg := must(messages.MakeObjectMessage(coinbase))
 
 	p1.send(coinbaseMsg)
@@ -318,14 +318,14 @@ func main() {
 	   Object exchange
 	--------------------------*/
 	testSelfObjectRetrieval(p1, coinbaseID, coinbaseMsg)
-	dummyHash := messages.HashID("0000000000000000000000000000000000000000000000000000000000001234")
+	dummyHash := messages.T_HashID("0000000000000000000000000000000000000000000000000000000000001234")
 	testIHaveFlow(p1, dummyHash)
 	testGossip(p1, p2, coinbaseID, coinbaseMsg)
 
 	/* -------------------------
 	   Validation
 	--------------------------*/
-	sig := messages.Signature("1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef")
+	sig := messages.T_Signature("1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef")
 
 	testUnknownObject(p1)
 	testInvalidSignature(p1, coinbaseID)
